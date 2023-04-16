@@ -62,7 +62,14 @@ namespace SAPTeam.Zily
             stream.WriteByte((byte)(len / 256));
             stream.WriteByte((byte)(len & 255));
             stream.Write(outBuffer, 0, len);
-            stream.Flush();
+            if (stream is MemoryStream)
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+            }
+            else
+            {
+                stream.Flush();
+            }
 
             return outBuffer.Length + 2;
         }

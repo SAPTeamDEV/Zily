@@ -8,10 +8,10 @@
     
     <Title>Zily</Title>
     <AssemblyTitle>$(Title)</AssemblyTitle>
-    <Product>An open source inter-process protocol.</Product>
+    <Product>An open source interprocess communication protocol.</Product>
     <Authors>Alireza Poodineh</Authors>
     <Company>SAP Team</Company>
-    <Description>Zily is an open source protocol for inter-process communications.</Description>
+    <Description>Zily is an open source protocol for interprocess communications.</Description>
     <PackageTags>pipe;console;remote-console;protocol;pipe-protocol</PackageTags>
     <RepositoryUrl>https://github.com/SAPTeamDEV/Zily</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
