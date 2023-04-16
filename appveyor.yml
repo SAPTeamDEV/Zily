@@ -1,0 +1,27 @@
+image: Visual Studio 2022
+
+branches:
+  only:
+  - master
+
+build_script:
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: dotnet build -c Release
+  - cmd: dotnet pack -c Release
+
+test_script:
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\Zily.Tests\
+  - cmd: dotnet restore
+  - cmd: dotnet build
+  - cmd: dotnet test
+
+artifacts:
+  - path: Zily*\bin\Release\SAPTeam.Zily.*.*nupkg
+
+deploy:
+  provider: NuGet
+  on:
+    branch: master
+  api_key:
+    secure: 2JgiRhKTzQyXmzR9JYLL6f9aNfxEKvr0pF0NxqQ1YY59O1Z5xQqI9kmDgFEiJe4y
+  skip_symbols: false

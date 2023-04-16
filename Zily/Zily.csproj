@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <AssemblyName>SAPTeam.Zily</AssemblyName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+    <PackageId>$(AssemblyName)</PackageId>
+    
+    <Title>Zily</Title>
+    <AssemblyTitle>$(Title)</AssemblyTitle>
+    <Product>An open source inter-process protocol.</Product>
+    <Authors>Alireza Poodineh</Authors>
+    <Company>SAP Team</Company>
+    <Description>Zily is an open source protocol for inter-process communications.</Description>
+    <PackageTags>pipe;console;remote-console;protocol;pipe-protocol</PackageTags>
+    <RepositoryUrl>https://github.com/SAPTeamDEV/Zily</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <Deterministic>True</Deterministic>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+   </PropertyGroup>
+    
+    <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.5.119" PrivateAssets="All"/>
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1" PrivateAssets="All"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  
+</Project>
