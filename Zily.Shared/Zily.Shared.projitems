@@ -9,6 +9,6 @@
     <Import_RootNamespace>Zily.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Zily.Shared\ZilyStream.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ZilyStream.cs" />
   </ItemGroup>
 </Project>
