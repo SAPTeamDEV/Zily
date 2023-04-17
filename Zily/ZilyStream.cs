@@ -1,13 +1,14 @@
 using System.IO;
 using System.Text;
 using System;
+using System.Linq;
 
 namespace SAPTeam.Zily
 {
     /// <summary>
     /// Provides a unicode data-stream protocol.
     /// </summary>
-    public class ZilyStream
+    public partial class ZilyStream : Stream
     {
         private Stream stream;
         private UnicodeEncoding streamEncoding;
@@ -25,6 +26,46 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
+        /// Reads the header of the response.
+        /// </summary>
+        /// <returns>
+        /// Length of sent bytes.
+        /// </returns>
+        public int ReadHeader()
+        {
+            int len = 0;
+
+            len = ReadByte() * 256;
+            len += ReadByte();
+
+            return len;
+        }
+
+        /// <summary>
+        /// Creates a header.
+        /// </summary>
+        /// <param name="length">
+        /// Length of bytes that will be sent.
+        /// </param>
+        /// <returns>
+        /// An array of header bytes.
+        /// </returns>
+        public byte[] CreateHeader(int length)
+        {
+            int len = length;
+            if (len > ushort.MaxValue)
+            {
+                len = ushort.MaxValue;
+            }
+
+            return new byte[]
+            {
+                (byte)(len / 256),
+                (byte)(len & 255)
+            };
+        }
+
+        /// <summary>
         /// Reads the stream data as string.
         /// </summary>
         /// <returns>
@@ -32,14 +73,11 @@ namespace SAPTeam.Zily
         /// </returns>
         public string ReadString()
         {
-            int len = 0;
+            int len = ReadHeader();
+            byte[] buffer = new byte[len];
+            Read(buffer, 0, len);
 
-            len = stream.ReadByte() * 256;
-            len += stream.ReadByte();
-            byte[] inBuffer = new byte[len];
-            stream.Read(inBuffer, 0, len);
-
-            return streamEncoding.GetString(inBuffer);
+            return streamEncoding.GetString(buffer);
         }
 
         /// <summary>
@@ -53,25 +91,25 @@ namespace SAPTeam.Zily
         /// </returns>
         public int WriteString(string text)
         {
-            byte[] outBuffer = streamEncoding.GetBytes(text);
-            int len = outBuffer.Length;
-            if (len > UInt16.MaxValue)
+            byte[] body = streamEncoding.GetBytes(text);
+            byte[] header = CreateHeader(body.Length);
+            byte[] buffer = header.Concat(body).ToArray();
+
+            foreach (var data in buffer)
             {
-                len = (int)UInt16.MaxValue;
+                WriteByte(data);
             }
-            stream.WriteByte((byte)(len / 256));
-            stream.WriteByte((byte)(len & 255));
-            stream.Write(outBuffer, 0, len);
+
             if (stream is MemoryStream)
             {
-                stream.Seek(0, SeekOrigin.Begin);
+                Seek(0, SeekOrigin.Begin);
             }
             else
             {
-                stream.Flush();
+                Flush();
             }
 
-            return outBuffer.Length + 2;
+            return buffer.Length;
         }
     }
 }
