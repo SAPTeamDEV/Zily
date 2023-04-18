@@ -69,11 +69,92 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Receives and Parses the sent data.
+        /// Receives sent data and then parses it.
         /// </summary>
         public void Parse()
         {
+            var header = ReadHeader();
+            Parse(header.flag, header.length);
+        }
 
+        /// <summary>
+        /// Parses the sent bytes and takes actions according to the header flag.
+        /// </summary>
+        /// <param name="header">
+        /// The header data provided by the <see cref="ReadHeader()"/>.
+        /// </param>
+        public void Parse((HeaderFlag flag, int length) header)
+        {
+            Parse(header.flag, header.length);
+        }
+
+        /// <summary>
+        /// Parses the sent bytes and takes actions according to the header flag.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
+        /// <param name="length">
+        /// Length of bytes that will be sent.
+        /// </param>
+        public void Parse(HeaderFlag flag, int length)
+        {
+            if (!ParseResponse(flag, length))
+            {
+                switch (flag)
+                {
+                    case HeaderFlag.Write:
+                        Console.Write(ReadString(length));
+                        break;
+                    default:
+                        throw new ArgumentException($"The flag \"{flag}\" is not supported.");
+                } 
+            }
+        }
+
+        /// <summary>
+        /// Parses the given header response.
+        /// </summary>
+        /// <param name="header">
+        /// The header data provided by the <see cref="ReadHeader()"/>.
+        /// </param>
+        /// <returns>
+        /// If the flag is <see cref="HeaderFlag.Ok"/>, it returns <see langword="true"/>.
+        /// otherwise if it returns <see langword="false"/>.
+        /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
+        /// </returns>
+        /// <exception cref="Exception"></exception>
+        public bool ParseResponse((HeaderFlag flag, int length) header)
+        {
+            return ParseResponse(header.flag, header.length);
+        }
+
+        /// <summary>
+        /// Parses the given header response.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
+        /// <param name="length">
+        /// Length of bytes that will be sent.
+        /// </param>
+        /// <returns>
+        /// If the flag is <see cref="HeaderFlag.Ok"/>, it returns <see langword="true"/>.
+        /// otherwise if it returns <see langword="false"/>.
+        /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
+        /// </returns>
+        /// <exception cref="Exception"></exception>
+        public bool ParseResponse(HeaderFlag flag, int length)
+        {
+            switch (flag)
+            {
+                case HeaderFlag.Ok:
+                    return true;;
+                case HeaderFlag.Fail:
+                    throw new Exception(ReadString(length));
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -85,6 +166,20 @@ namespace SAPTeam.Zily
         public string ReadString()
         {
             int length = ReadHeader().length;
+            return ReadString(length);
+        }
+
+        /// <summary>
+        /// Reads the stream data as string.
+        /// </summary>
+        /// <param name="length">
+        /// The maximum number of bytes to be read from the current stream.
+        /// </param>
+        /// <returns>
+        /// A <see cref="string"/> that contains the stream data.
+        /// </returns>
+        public string ReadString(int length)
+        {
             byte[] buffer = new byte[length];
             Read(buffer, 0, length);
 
@@ -92,18 +187,29 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Writes a sequence of data to the stream.
+        /// Writes a sequence of data to the stream with the <see cref="HeaderFlag.Write"/> flag for writing the text to the receiver console.
         /// </summary>
         /// <param name="text">
         /// The text that would be wrote to the stream.
         /// </param>
-        /// <returns>
-        /// The length of bytes that wrote to the stream.
-        /// </returns>
-        public int WriteString(string text)
+        public void WriteString(string text)
+        {
+            WriteString(HeaderFlag.Write, text);
+        }
+
+        /// <summary>
+        /// Creates a header with given flag and text and writes it beside the <paramref name="text"/> to the stream.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
+        /// <param name="text">
+        /// The text (argument) for the requested action or response to a request.
+        /// </param>
+        public void WriteString(HeaderFlag flag, string text = null)
         {
             byte[] body = streamEncoding.GetBytes(text);
-            byte[] header = CreateHeader(HeaderFlag.Write, body.Length);
+            byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
 
             foreach (var data in buffer)
@@ -119,8 +225,6 @@ namespace SAPTeam.Zily
             {
                 Flush();
             }
-
-            return buffer.Length;
         }
     }
 }
