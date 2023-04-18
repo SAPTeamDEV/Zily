@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zily", "Zily\Zily.csproj", "{C10B09A6-BA2A-4597-B592-BCE1C60C7C6C}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Zily.Shared", "Zily.Shared\Zily.Shared.shproj", "{1B5B062E-0FDD-4EC6-87E7-50FD85297086}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zily.Tests", "Zily.Tests\Zily.Tests.csproj", "{24763FE1-827E-4684-82BB-3FD55BE495A7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0081CEF1-B6C5-4C66-AE30-FA5D5C9C13FE}"
@@ -35,9 +33,5 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CF2F0C51-DF6A-4E5C-B0C1-891B3FDF164C}
-	EndGlobalSection
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Zily.Shared\Zily.Shared.projitems*{1b5b062e-0fdd-4ec6-87e7-50fd85297086}*SharedItemsImports = 13
-		Zily.Shared\Zily.Shared.projitems*{c10b09a6-ba2a-4597-b592-bce1c60c7c6c}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

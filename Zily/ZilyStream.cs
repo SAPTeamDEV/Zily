@@ -29,40 +29,51 @@ namespace SAPTeam.Zily
         /// Reads the header of the response.
         /// </summary>
         /// <returns>
-        /// Length of sent bytes.
+        /// Flag and Length of sent bytes.
         /// </returns>
-        public int ReadHeader()
+        public (HeaderFlag flag, int length) ReadHeader()
         {
-            int len = 0;
+            var flag = (HeaderFlag)ReadByte();
 
-            len = ReadByte() * 256;
-            len += ReadByte();
+            int length = ReadByte() * 256;
+            length += ReadByte();
 
-            return len;
+            return (flag, length);
         }
 
         /// <summary>
         /// Creates a header.
         /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
         /// <param name="length">
         /// Length of bytes that will be sent.
         /// </param>
         /// <returns>
         /// An array of header bytes.
         /// </returns>
-        public byte[] CreateHeader(int length)
+        public byte[] CreateHeader(HeaderFlag flag, int length)
         {
-            int len = length;
-            if (len > ushort.MaxValue)
+            if (length > ushort.MaxValue)
             {
-                len = ushort.MaxValue;
+                length = ushort.MaxValue;
             }
 
             return new byte[]
             {
-                (byte)(len / 256),
-                (byte)(len & 255)
+                (byte)flag,
+                (byte)(length / 256),
+                (byte)(length & 255)
             };
+        }
+
+        /// <summary>
+        /// Receives and Parses the sent data.
+        /// </summary>
+        public void Parse()
+        {
+
         }
 
         /// <summary>
@@ -73,9 +84,9 @@ namespace SAPTeam.Zily
         /// </returns>
         public string ReadString()
         {
-            int len = ReadHeader();
-            byte[] buffer = new byte[len];
-            Read(buffer, 0, len);
+            int length = ReadHeader().length;
+            byte[] buffer = new byte[length];
+            Read(buffer, 0, length);
 
             return streamEncoding.GetString(buffer);
         }
@@ -92,7 +103,7 @@ namespace SAPTeam.Zily
         public int WriteString(string text)
         {
             byte[] body = streamEncoding.GetBytes(text);
-            byte[] header = CreateHeader(body.Length);
+            byte[] header = CreateHeader(HeaderFlag.Write, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
 
             foreach (var data in buffer)
