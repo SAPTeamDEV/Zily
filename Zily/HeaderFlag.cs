@@ -23,5 +23,12 @@ namespace SAPTeam.Zily
         /// It requests the server to write a text to console.
         /// </summary>
         Write = 10,
+
+#if DEBUG
+        /// <summary>
+        /// An unsupported flag.
+        /// </summary>
+        Unsupported = 99,
+#endif
     }
 }

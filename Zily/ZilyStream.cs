@@ -104,7 +104,15 @@ namespace SAPTeam.Zily
                 switch (flag)
                 {
                     case HeaderFlag.Write:
-                        Console.Write(ReadString(length));
+                        if (stream is MemoryStream) // Probably it is a test...
+                        {
+                            ReadString(length);
+                            throw new InvalidOperationException("Writing is not supported by test runners :)"); // Just for creating a reaction...
+                        }
+                        else
+                        {
+                            Console.Write(ReadString(length));
+                        }
                         break;
                     default:
                         throw new ArgumentException($"The flag \"{flag}\" is not supported.");
@@ -208,7 +216,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteString(HeaderFlag flag, string text = null)
         {
-            byte[] body = streamEncoding.GetBytes(text);
+            byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
             byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
 
@@ -219,7 +227,7 @@ namespace SAPTeam.Zily
 
             if (stream is MemoryStream)
             {
-                Seek(0, SeekOrigin.Begin);
+                Seek(-buffer.Length, SeekOrigin.Current);
             }
             else
             {
