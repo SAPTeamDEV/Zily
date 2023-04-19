@@ -154,7 +154,10 @@ namespace SAPTeam.Zily
                         responseHandled = true;
                         break;
                     default:
-                        Fail($"The flag \"{flag}\" is not supported.");
+                        if (!ParseHelper(flag, length))
+                        {
+                            Fail($"The flag \"{flag}\" is not supported.");
+                        }
                         responseHandled = true;
                         break;
                 }
@@ -164,6 +167,24 @@ namespace SAPTeam.Zily
                     Ok();
                 }
             }
+        }
+
+        /// <summary>
+        /// When overridden in a derived class, Parses header flags that is not parsed in the base class.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
+        /// <param name="length">
+        /// Length of bytes that will be sent.
+        /// </param>
+        /// <returns>
+        /// <see langword="true"/> if it can parse the given header, otherwise it returns <see langword="false"/>.
+        /// if you want to write your own error message, you must return <see langword="true"/> to prevent unexpected behaviors.
+        /// </returns>
+        protected virtual bool ParseHelper(HeaderFlag flag, int length)
+        {
+            return false;
         }
 
         /// <summary>
@@ -197,7 +218,7 @@ namespace SAPTeam.Zily
         /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
         /// </returns>
         /// <exception cref="Exception"></exception>
-        public bool ParseResponse(HeaderFlag flag, int length)
+        public virtual bool ParseResponse(HeaderFlag flag, int length)
         {
             logger.Debug("Trying to parse a header with {flag} flag as a response", flag);
 
