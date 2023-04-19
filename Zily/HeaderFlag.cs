@@ -20,9 +20,29 @@ namespace SAPTeam.Zily
         Fail = 2,
 
         /// <summary>
-        /// It requests the server to write a text to console.
+        /// Indicates a potential abnormal state.
+        /// </summary>
+        Warn = 3,
+
+        /// <summary>
+        /// Indicates an established connection.
+        /// </summary>
+        Connected = 4,
+
+        /// <summary>
+        /// Indicates a response that represents the protocol version.
+        /// </summary>
+        VersionInfo = 5,
+
+        /// <summary>
+        /// A request for writing a text to the console.
         /// </summary>
         Write = 10,
+
+        /// <summary>
+        /// A request for getting the protocol version.
+        /// </summary>
+        Version = 11,
 
 #if DEBUG
         /// <summary>

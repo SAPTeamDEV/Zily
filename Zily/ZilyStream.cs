@@ -10,18 +10,32 @@ namespace SAPTeam.Zily
     /// </summary>
     public partial class ZilyStream : Stream
     {
-        private Stream stream;
-        private UnicodeEncoding streamEncoding;
+        /// <summary>
+        /// Gets the protocol version.
+        /// </summary>
+        public static Version API = new Version(2, 0);
+
+        /// <summary>
+        /// Gets the stream protocol version.
+        /// </summary>
+        public Version StreamVersion { get; private set; }
+
+        /// <summary>
+        /// Gets the underlying <see cref="System.IO.Stream"/>.
+        /// </summary>
+        public Stream Stream { get; }
+
+        private readonly UnicodeEncoding streamEncoding;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyStream"/>.
         /// </summary>
         /// <param name="stream">
-        /// An instance of <see cref="Stream"/> with ability to read, write or both.
+        /// An instance of <see cref="System.IO.Stream"/> with ability to read, write or both.
         /// </param>
         public ZilyStream(Stream stream)
         {
-            this.stream = stream;
+            this.Stream = stream;
             streamEncoding = new UnicodeEncoding();
         }
 
@@ -104,7 +118,7 @@ namespace SAPTeam.Zily
                 switch (flag)
                 {
                     case HeaderFlag.Write:
-                        if (stream is MemoryStream) // Probably it is a test...
+                        if (Stream is MemoryStream) // Probably it is a test...
                         {
                             ReadString(length);
                             throw new InvalidOperationException("Writing is not supported by test runners :)"); // Just for creating a reaction...
@@ -113,6 +127,9 @@ namespace SAPTeam.Zily
                         {
                             Console.Write(ReadString(length));
                         }
+                        break;
+                    case HeaderFlag.Version:
+                        WriteString(HeaderFlag.VersionInfo, API.ToString());
                         break;
                     default:
                         throw new ArgumentException($"The flag \"{flag}\" is not supported.");
@@ -147,22 +164,31 @@ namespace SAPTeam.Zily
         /// Length of bytes that will be sent.
         /// </param>
         /// <returns>
-        /// If the flag is <see cref="HeaderFlag.Ok"/>, it returns <see langword="true"/>.
-        /// otherwise if it returns <see langword="false"/>.
+        /// <see langword="true"/> if the flag is a response flag, otherwise it returns <see langword="false"/>.
         /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
         /// </returns>
         /// <exception cref="Exception"></exception>
         public bool ParseResponse(HeaderFlag flag, int length)
         {
+            bool isHandled = true;
+
             switch (flag)
             {
                 case HeaderFlag.Ok:
-                    return true;;
+                case HeaderFlag.Warn:
+                case HeaderFlag.Connected:
+                    break;
+                case HeaderFlag.VersionInfo:
+                    StreamVersion = new Version(ReadString(length));
+                    break;
                 case HeaderFlag.Fail:
                     throw new Exception(ReadString(length));
                 default:
-                    return false;
+                    isHandled = false;
+                    break;
             }
+
+            return isHandled;
         }
 
         /// <summary>
@@ -225,7 +251,7 @@ namespace SAPTeam.Zily
                 WriteByte(data);
             }
 
-            if (stream is MemoryStream)
+            if (Stream is MemoryStream)
             {
                 Seek(-buffer.Length, SeekOrigin.Current);
             }

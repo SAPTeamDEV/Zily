@@ -94,5 +94,17 @@ namespace SAPTeam.Zily.Tests
             Assert.False(parseResult);
             Assert.Equal("test", zs.ReadString(header.length));
         }
+
+        [Fact]
+        public void VersionTest()
+        {
+            var ms = new MemoryStream();
+            var zs = new ZilyStream(ms);
+
+            zs.WriteString(HeaderFlag.Version);
+            zs.Parse();
+            zs.Parse();
+            Assert.Equal("2.0", zs.StreamVersion.ToString());
+        }
     }
 }
