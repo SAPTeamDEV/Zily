@@ -8,7 +8,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString("Hello");
+            zs.Write("Hello");
             Assert.Equal("Hello", zs.ReadString());
         }
 
@@ -18,16 +18,16 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString("test");
+            zs.Write("test");
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
-            zs.WriteString("");
+            zs.Write("");
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
-            zs.WriteString(HeaderFlag.Write);
+            zs.WriteCommand(HeaderFlag.Write);
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
-            zs.WriteString(HeaderFlag.Unsupported, "test");
+            zs.WriteCommand(HeaderFlag.Unsupported, "test");
             zs.Parse();
             Assert.Throws<Exception>(() => zs.Parse());
         }
@@ -38,7 +38,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString(HeaderFlag.Ok);
+            zs.WriteCommand(HeaderFlag.Ok);
             var header = zs.ReadHeader();
             var parseResult = zs.ParseResponse(header);
             Assert.True(parseResult);
@@ -51,7 +51,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString(HeaderFlag.Fail, "Test exception.");
+            zs.WriteCommand(HeaderFlag.Fail, "Test exception.");
             var header = zs.ReadHeader();
             try
             {
@@ -70,7 +70,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString(HeaderFlag.Fail);
+            zs.WriteCommand(HeaderFlag.Fail);
             var header = zs.ReadHeader();
             try
             {
@@ -89,7 +89,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString("test");
+            zs.Write("test");
             var header = zs.ReadHeader();
             var parseResult = zs.ParseResponse(header);
             Assert.False(parseResult);
@@ -102,7 +102,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.WriteString(HeaderFlag.Version);
+            zs.WriteCommand(HeaderFlag.Version);
             zs.Parse();
             zs.Parse();
             Assert.Equal("2.0", zs.StreamVersion.ToString());

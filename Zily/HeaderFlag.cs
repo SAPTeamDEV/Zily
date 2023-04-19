@@ -30,9 +30,14 @@ namespace SAPTeam.Zily
         Connected = 4,
 
         /// <summary>
+        /// Indicates an refused connection.
+        /// </summary>
+        Disconnected = 5,
+
+        /// <summary>
         /// Indicates a response that represents the protocol version.
         /// </summary>
-        VersionInfo = 5,
+        VersionInfo = 6,
 
         /// <summary>
         /// A request for writing a text to the console.

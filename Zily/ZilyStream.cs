@@ -122,7 +122,7 @@ namespace SAPTeam.Zily
                     case HeaderFlag.Write:
                         if (Stream is MemoryStream) // Probably it is a test...
                         {
-                            ReadString(length);
+                            ReadString(length); // Just for cleaning everything
                             throw new InvalidOperationException("Writing is not supported by test runners :)"); // Just for creating a reaction...
                         }
                         else
@@ -131,18 +131,18 @@ namespace SAPTeam.Zily
                         }
                         break;
                     case HeaderFlag.Version:
-                        WriteString(HeaderFlag.VersionInfo, API.ToString());
+                        VersionInfo();
                         responseHandled = true;
                         break;
                     default:
-                        WriteString(HeaderFlag.Fail, $"The flag \"{flag}\" is not supported.");
+                        Fail($"The flag \"{flag}\" is not supported.");
                         responseHandled = true;
                         break;
                 }
 
                 if (!responseHandled)
                 {
-                    WriteString(HeaderFlag.Ok);
+                    Ok();
                 }
             }
         }
@@ -231,17 +231,6 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Writes a sequence of data to the stream with the <see cref="HeaderFlag.Write"/> flag for writing the text to the receiver console.
-        /// </summary>
-        /// <param name="text">
-        /// The text that would be wrote to the stream.
-        /// </param>
-        public void WriteString(string text)
-        {
-            WriteString(HeaderFlag.Write, text);
-        }
-
-        /// <summary>
         /// Creates a header with given flag and text and writes it beside the <paramref name="text"/> to the stream.
         /// </summary>
         /// <param name="flag">
@@ -250,7 +239,7 @@ namespace SAPTeam.Zily
         /// <param name="text">
         /// The text (argument) for the requested action or response to a request.
         /// </param>
-        public void WriteString(HeaderFlag flag, string text = null)
+        public void WriteCommand(HeaderFlag flag, string text = null)
         {
             byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
             byte[] header = CreateHeader(flag, body.Length);
