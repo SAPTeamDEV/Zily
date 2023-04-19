@@ -1,7 +1,14 @@
+using Serilog;
+
 namespace SAPTeam.Zily.Tests
 {
     public class StreamTests
     {
+        public StreamTests()
+        {
+            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
+        }
+
         [Fact]
         public void IOTest()
         {

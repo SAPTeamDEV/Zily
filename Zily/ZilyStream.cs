@@ -136,7 +136,7 @@ namespace SAPTeam.Zily
                 {
                     case HeaderFlag.Write:
                         var text = ReadString(length);
-                        logger.Information("Writing {text} to the console", text);
+                        logger.Information("Writing \"{text}\" to the console", text);
 
                         if (Stream is MemoryStream) // Probably it is a test...
                         {
