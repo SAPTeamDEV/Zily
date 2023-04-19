@@ -22,6 +22,7 @@ namespace SAPTeam.Zily
         /// </param>
         protected void Fail(string message)
         {
+            logger.Error(message);
             WriteCommand(HeaderFlag.Fail, message);
         }
 
@@ -33,23 +34,8 @@ namespace SAPTeam.Zily
         /// </param>
         protected void Warn(string message)
         {
+            logger.Warning(message);
             WriteCommand(HeaderFlag.Warn, message);
-        }
-
-        /// <summary>
-        /// Sends the <see cref="HeaderFlag.Connected"/> response.
-        /// </summary>
-        protected void Connected()
-        {
-            WriteCommand(HeaderFlag.Connected);
-        }
-
-        /// <summary>
-        /// Sends the <see cref="HeaderFlag.Disconnected"/> response.
-        /// </summary>
-        protected void Disconnected()
-        {
-            WriteCommand(HeaderFlag.Disconnected);
         }
 
         /// <summary>
@@ -69,6 +55,14 @@ namespace SAPTeam.Zily
         public void Write(string text)
         {
             WriteCommand(HeaderFlag.Write, text);
+        }
+
+        /// <summary>
+        /// Sends a <see cref="HeaderFlag.Version"/> request.
+        /// </summary>
+        public void Version()
+        {
+            WriteCommand(HeaderFlag.Version);
         }
     }
 }

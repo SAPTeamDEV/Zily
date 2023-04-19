@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using System;
 using System.Linq;
+using Serilog;
 
 namespace SAPTeam.Zily
 {
@@ -26,6 +27,7 @@ namespace SAPTeam.Zily
         public Stream Stream { get; }
 
         private readonly UnicodeEncoding streamEncoding;
+        private readonly ILogger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyStream"/>.
@@ -33,10 +35,21 @@ namespace SAPTeam.Zily
         /// <param name="stream">
         /// An instance of <see cref="System.IO.Stream"/> with ability to read, write or both.
         /// </param>
-        public ZilyStream(Stream stream)
+        /// <param name="logger">
+        /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
+        /// </param>
+        public ZilyStream(Stream stream, ILogger logger = null)
         {
-            this.Stream = stream;
+            if (logger == null)
+            {
+                logger = Log.Logger;
+            }
+
+            logger.Debug("Initializing a new ZilyStream instance");
+
+            Stream = stream;
             streamEncoding = new UnicodeEncoding();
+            this.logger = logger;
         }
 
         /// <summary>
@@ -115,22 +128,28 @@ namespace SAPTeam.Zily
         {
             if (!ParseResponse(flag, length))
             {
+                logger.Debug("Parsing a header with flag {flag}", flag);
+
                 bool responseHandled = false;
 
                 switch (flag)
                 {
                     case HeaderFlag.Write:
+                        var text = ReadString(length);
+                        logger.Information("Writing {text} to the console", text);
+
                         if (Stream is MemoryStream) // Probably it is a test...
                         {
-                            ReadString(length); // Just for cleaning everything
-                            throw new InvalidOperationException("Writing is not supported by test runners :)"); // Just for creating a reaction...
+                            logger.Error("Experimental crash triggered");
+                            throw new InvalidOperationException("Writing is not supported by test runners :)");
                         }
                         else
                         {
-                            Console.Write(ReadString(length));
+                            Console.Write(text);
                         }
                         break;
                     case HeaderFlag.Version:
+                        logger.Information("Protocol version is requested");
                         VersionInfo();
                         responseHandled = true;
                         break;
@@ -180,19 +199,26 @@ namespace SAPTeam.Zily
         /// <exception cref="Exception"></exception>
         public bool ParseResponse(HeaderFlag flag, int length)
         {
+            logger.Debug("Trying to parse a header with {flag} flag as a response", flag);
+
             bool isHandled = true;
 
             switch (flag)
             {
                 case HeaderFlag.Ok:
+                    logger.Debug("Stream response is OK");
+                    break;
                 case HeaderFlag.Warn:
-                case HeaderFlag.Connected:
+                    logger.Warning(ReadString(length));
                     break;
                 case HeaderFlag.VersionInfo:
                     StreamVersion = new Version(ReadString(length));
+                    logger.Debug("Stream protocol version is {version}", StreamVersion);
                     break;
                 case HeaderFlag.Fail:
-                    throw new Exception(ReadString(length));
+                    var e = new Exception(ReadString(length));
+                    logger.Fatal(e, "Stream returns an error");
+                    throw e;
                 default:
                     isHandled = false;
                     break;
@@ -224,6 +250,7 @@ namespace SAPTeam.Zily
         /// </returns>
         public string ReadString(int length)
         {
+            logger.Information("Reading {length} bytes of data", length);
             byte[] buffer = new byte[length];
             Read(buffer, 0, length);
 
@@ -241,6 +268,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteCommand(HeaderFlag flag, string text = null)
         {
+            logger.Information("Writing data with flag {flag} and message \"{text}\"", flag, text);
             byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
             byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
@@ -258,6 +286,8 @@ namespace SAPTeam.Zily
             {
                 Flush();
             }
+
+            logger.Information("Wrote {length} bytes", buffer.Length);
         }
     }
 }
