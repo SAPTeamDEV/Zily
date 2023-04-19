@@ -28,7 +28,8 @@ namespace SAPTeam.Zily.Tests
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
             zs.WriteString(HeaderFlag.Unsupported, "test");
-            Assert.Throws<ArgumentException>(() => zs.Parse());
+            zs.Parse();
+            Assert.Throws<Exception>(() => zs.Parse());
         }
 
         [Fact]

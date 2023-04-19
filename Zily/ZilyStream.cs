@@ -115,6 +115,8 @@ namespace SAPTeam.Zily
         {
             if (!ParseResponse(flag, length))
             {
+                bool responseHandled = false;
+
                 switch (flag)
                 {
                     case HeaderFlag.Write:
@@ -130,10 +132,18 @@ namespace SAPTeam.Zily
                         break;
                     case HeaderFlag.Version:
                         WriteString(HeaderFlag.VersionInfo, API.ToString());
+                        responseHandled = true;
                         break;
                     default:
-                        throw new ArgumentException($"The flag \"{flag}\" is not supported.");
-                } 
+                        WriteString(HeaderFlag.Fail, $"The flag \"{flag}\" is not supported.");
+                        responseHandled = true;
+                        break;
+                }
+
+                if (!responseHandled)
+                {
+                    WriteString(HeaderFlag.Ok);
+                }
             }
         }
 
