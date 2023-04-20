@@ -37,14 +37,21 @@ namespace SAPTeam.Zily
             {
                 logger.Information("Connecting to the pipe server");
                 _clientStream.Connect();
+                logger.Information("Successfully connected to the pipe server");
             }
 
             logger.Information("Establishing a Zily connection");
             logger.Debug("Getting server protocol version");
             Send(HeaderFlag.Version);
+            logger.Debug("Checking server version");
             if (StreamVersion.Major != API.Major)
             {
                 // Will completed in the future
+                logger.Warning("Client version is {cVer} but the server version is {sVer}. Connection may be unstable.", API, StreamVersion);
+            }
+            else
+            {
+                logger.Debug("Client version is {cVer} and the server version is {sVer}.", API, StreamVersion);
             }
 
             WriteCommand(HeaderFlag.Connected);
@@ -59,7 +66,7 @@ namespace SAPTeam.Zily
                 switch (flag)
                 {
                     case HeaderFlag.Disconnected:
-                        logger.Error("Pipe server is closed");
+                        logger.Error("Zily server is closed");
                         break;
                     default:
                         return false;
@@ -67,6 +74,13 @@ namespace SAPTeam.Zily
             }
 
             return true;
+        }
+
+        /// <inheritdoc/>
+        public override void Close()
+        {
+            base.Close();
+            logger.Information("Connection is closed");
         }
     }
 }

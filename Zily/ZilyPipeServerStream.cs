@@ -33,7 +33,10 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Accept()
         {
+            logger.Debug("Waiting for client");
             _serverStream.WaitForConnection();
+            logger.Information("A new client connected to the pipe server");
+            logger.Information("Establishing a Zily connection");
 
             while (true)
             {
@@ -58,8 +61,10 @@ namespace SAPTeam.Zily
                 switch (flag)
                 {
                     case HeaderFlag.Connected:
+                        logger.Information("Zily client successfully connected");
                         break;
                     case HeaderFlag.Disconnected:
+                        logger.Error("The client has disconnected from the server");
                         break;
                     default:
                         return false;
@@ -74,6 +79,7 @@ namespace SAPTeam.Zily
         {
             base.Close();
             _serverStream.Disconnect();
+            logger.Information("Server is closed");
         }
     }
 }

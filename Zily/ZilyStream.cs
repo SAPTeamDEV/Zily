@@ -302,7 +302,7 @@ namespace SAPTeam.Zily
         /// </returns>
         public string ReadString(int length)
         {
-            logger.Information("Reading {length} bytes of data", length);
+            logger.Debug("Reading {length} bytes of data", length);
             byte[] buffer = new byte[length];
             Read(buffer, 0, length);
 
@@ -320,7 +320,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteCommand(HeaderFlag flag, string text = null)
         {
-            logger.Information("Writing data with flag {flag} and message \"{text}\"", flag, text);
+            logger.Debug("Writing data with flag {flag} and message \"{text}\"", flag, text.Replace("\n", ""));
             byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
             byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
@@ -336,7 +336,7 @@ namespace SAPTeam.Zily
                 Flush();
             }
 
-            logger.Information("Wrote {length} bytes", buffer.Length);
+            logger.Debug("Wrote {length} bytes", buffer.Length);
         }
 
         /// <summary>

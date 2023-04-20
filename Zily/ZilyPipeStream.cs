@@ -104,6 +104,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void Listen(CancellationToken cancellationToken, bool suppressLogger = true)
         {
+            logger.Information("Staring listener");
             ILogger _logger = null;
             if (suppressLogger)
             {
@@ -128,11 +129,14 @@ namespace SAPTeam.Zily
             {
                 logger = _logger;
             }
+
+            logger.Information("Listener has stopped");
         }
 
         /// <inheritdoc/>
         public override void Close()
         {
+            logger.Information("Closing connection");
             WriteCommand(HeaderFlag.Disconnected);
             // _pipe.Close();
         }
