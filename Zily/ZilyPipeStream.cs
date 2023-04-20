@@ -63,25 +63,6 @@ namespace SAPTeam.Zily
             };
         }
 
-        /// <inheritdoc/>
-        protected override bool ParseHelper(HeaderFlag flag, int length)
-        {
-            bool responseHandled = false;
-
-            switch (flag)
-            {
-                default:
-                    return false;
-            }
-
-            if (!responseHandled)
-            {
-                WriteCommand(HeaderFlag.Ok);
-            }
-
-            return true;
-        }
-
         /// <summary>
         /// Listens to all incoming requests.
         /// </summary>

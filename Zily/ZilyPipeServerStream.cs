@@ -41,13 +41,10 @@ namespace SAPTeam.Zily
             while (true)
             {
                 var header = ReadHeader();
-                if (header.flag != HeaderFlag.Connected)
+                Parse(header);
+
+                if (header.flag == HeaderFlag.Connected)
                 {
-                    Parse(header);
-                }
-                else
-                {
-                    ParseResponse(header);
                     break;
                 }
             }

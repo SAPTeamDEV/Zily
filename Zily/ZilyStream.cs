@@ -130,12 +130,12 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Parse()
         {
-            var header = ReadHeader();
-            Parse(header.flag, header.length);
+            var (flag, length) = ReadHeader();
+            Parse(flag, length);
         }
 
         /// <summary>
-        /// Parses the sent bytes and takes actions according to the header flag.
+        /// Parses the given header.
         /// </summary>
         /// <param name="header">
         /// The header data provided by the <see cref="ReadHeader()"/>.
@@ -146,75 +146,90 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Parses the sent bytes and takes actions according to the header flag.
+        /// Parses the given header.
         /// </summary>
         /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// The header flag.
         /// </param>
         /// <param name="length">
-        /// Length of bytes that will be sent.
+        /// The length of the text (argument) for the header flag.
         /// </param>
         public void Parse(HeaderFlag flag, int length)
         {
-            if (!ParseResponse(flag, length))
+            bool isHandled = false;
+
+            if (flag.IsRequest())
             {
-                logger.Debug("Parsing a header with flag {flag}", flag);
+                isHandled = ParseRequest(flag, length);
+            }
+            else if (flag.IsResponse())
+            {
+                isHandled = ParseResponse(flag, length);
+            }
 
-                bool responseHandled = false;
-
-                switch (flag)
-                {
-                    case HeaderFlag.Write:
-                        var text = ReadString(length);
-                        logger.Information("Writing \"{text}\" to the console", text);
-
-                        if (Stream is MemoryStream) // Probably it is a test...
-                        {
-                            logger.Error("Experimental crash triggered");
-                            throw new InvalidOperationException("Writing is not supported by test runners :)");
-                        }
-                        else
-                        {
-                            Console.Write(text);
-                        }
-                        break;
-                    case HeaderFlag.Version:
-                        logger.Information("Protocol version is requested");
-                        WriteCommand(HeaderFlag.VersionInfo, API.ToString());
-                        responseHandled = true;
-                        break;
-                    default:
-                        if (!ParseHelper(flag, length))
-                        {
-                            WriteCommand(HeaderFlag.Fail, $"The flag \"{flag}\" is not supported.");
-                        }
-                        responseHandled = true;
-                        break;
-                }
-
-                if (!responseHandled)
-                {
-                    WriteCommand(HeaderFlag.Ok);
-                }
+            if (!isHandled)
+            {
+                WriteCommand(HeaderFlag.Fail, $"The flag \"{flag}\" is not supported.");
             }
         }
 
         /// <summary>
-        /// When overridden in a derived class, Parses header flags that is not parsed in the base class.
+        /// Parses the given header request.
         /// </summary>
-        /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
-        /// </param>
-        /// <param name="length">
-        /// Length of bytes that will be sent.
+        /// <param name="header">
+        /// The header data provided by the <see cref="ReadHeader()"/>.
         /// </param>
         /// <returns>
-        /// <see langword="true"/> if it can parse the given header, otherwise it returns <see langword="false"/>.
-        /// if you want to write your own error message, you must return <see langword="true"/> to prevent unexpected behaviors.
+        /// <see langword="true"/> if this method could handle the given flag, otherwise it returns <see langword="false"/>.
         /// </returns>
-        protected virtual bool ParseHelper(HeaderFlag flag, int length)
+        public bool ParseRequest((HeaderFlag flag, int length) header)
         {
-            return false;
+            return ParseRequest(header.flag, header.length);
+        }
+
+        /// <summary>
+        /// Parses the given header request.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag.
+        /// </param>
+        /// <param name="length">
+        /// The length of the text (argument) for the header flag.
+        /// </param>
+        /// <returns>
+        /// <see langword="true"/> if this method could handle the given flag, otherwise it returns <see langword="false"/>.
+        /// </returns>
+        public virtual bool ParseRequest(HeaderFlag flag, int length)
+        {
+            logger.Debug("Parsing a request with flag {flag}", flag);
+
+            switch (flag)
+            {
+                case HeaderFlag.Write:
+                    var text = ReadString(length);
+                    logger.Information("Writing \"{text}\" to the console", text);
+
+                    if (Stream is MemoryStream) // Probably it is a test...
+                    {
+                        logger.Error("Experimental crash triggered");
+                        throw new InvalidOperationException("Writing is not supported by test runners :)");
+                    }
+                    else
+                    {
+                        Console.Write(text);
+                    }
+
+                    WriteCommand(HeaderFlag.Ok);
+                    break;
+                case HeaderFlag.Version:
+                    logger.Information("Protocol version is requested");
+                    WriteCommand(HeaderFlag.VersionInfo, API.ToString());
+                    break;
+                default:
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -224,9 +239,7 @@ namespace SAPTeam.Zily
         /// The header data provided by the <see cref="ReadHeader()"/>.
         /// </param>
         /// <returns>
-        /// If the flag is <see cref="HeaderFlag.Ok"/>, it returns <see langword="true"/>.
-        /// otherwise if it returns <see langword="false"/>.
-        /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
+        /// <see langword="true"/> if this method could handle the given flag, otherwise it returns <see langword="false"/>.
         /// </returns>
         /// <exception cref="Exception"></exception>
         public bool ParseResponse((HeaderFlag flag, int length) header)
@@ -244,15 +257,12 @@ namespace SAPTeam.Zily
         /// Length of bytes that will be sent.
         /// </param>
         /// <returns>
-        /// <see langword="true"/> if the flag is a response flag, otherwise it returns <see langword="false"/>.
-        /// if the flag is <see cref="HeaderFlag.Fail"/>, it throws an <see cref="Exception"/> with the sent message.
+        /// <see langword="true"/> if this method could handle the given flag, otherwise it returns <see langword="false"/>.
         /// </returns>
         /// <exception cref="Exception"></exception>
         public virtual bool ParseResponse(HeaderFlag flag, int length)
         {
             logger.Debug("Trying to parse a header with {flag} flag as a response", flag);
-
-            bool isHandled = true;
 
             switch (flag)
             {
@@ -272,18 +282,17 @@ namespace SAPTeam.Zily
                     logger.Fatal(e, "Stream returns an error");
                     throw e;
                 default:
-                    isHandled = false;
-                    break;
+                    return false;
             }
 
-            return isHandled;
+            return true;
         }
 
         /// <summary>
         /// Reads the stream data as string.
         /// </summary>
         /// <returns>
-        /// A <see cref="string"/> that contains the stream data.
+        /// A <see cref="string"/> of the stream data.
         /// </returns>
         public string ReadString()
         {
@@ -298,7 +307,7 @@ namespace SAPTeam.Zily
         /// The maximum number of bytes to be read from the current stream.
         /// </param>
         /// <returns>
-        /// A <see cref="string"/> that contains the stream data.
+        /// A <see cref="string"/> of the stream data.
         /// </returns>
         public string ReadString(int length)
         {
@@ -310,13 +319,13 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Creates a header with given flag and text and writes it beside the <paramref name="text"/> to the stream.
+        /// Creates a header with the given flag and text then writes it beside the given <paramref name="text"/> to the stream.
         /// </summary>
         /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// The header flag.
         /// </param>
         /// <param name="text">
-        /// The text (argument) for the requested action or response to a request.
+        /// The text (argument) for the header flag.
         /// </param>
         public void WriteCommand(HeaderFlag flag, string text = null)
         {
@@ -352,7 +361,7 @@ namespace SAPTeam.Zily
         {
             WriteCommand(flag, text);
             var header = ReadHeader();
-            Parse(header);
+            ParseResponse(header);
         }
     }
 }
