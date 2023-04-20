@@ -76,7 +76,7 @@ namespace SAPTeam.Zily
 
             if (!responseHandled)
             {
-                Ok();
+                WriteCommand(HeaderFlag.Ok);
             }
 
             return true;

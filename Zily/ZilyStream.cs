@@ -180,13 +180,13 @@ namespace SAPTeam.Zily
                         break;
                     case HeaderFlag.Version:
                         logger.Information("Protocol version is requested");
-                        VersionInfo();
+                        WriteCommand(HeaderFlag.VersionInfo, API.ToString());
                         responseHandled = true;
                         break;
                     default:
                         if (!ParseHelper(flag, length))
                         {
-                            Fail($"The flag \"{flag}\" is not supported.");
+                            WriteCommand(HeaderFlag.Fail, $"The flag \"{flag}\" is not supported.");
                         }
                         responseHandled = true;
                         break;
@@ -194,7 +194,7 @@ namespace SAPTeam.Zily
 
                 if (!responseHandled)
                 {
-                    Ok();
+                    WriteCommand(HeaderFlag.Ok);
                 }
             }
         }
