@@ -50,7 +50,7 @@ namespace SAPTeam.Zily
                 logger = Log.Logger;
             }
 
-            logger.Debug("Initializing a new ZilyStream instance");
+            logger.Debug("Initializing a new Zily session");
 
             Stream = stream;
             streamEncoding = new UnicodeEncoding();
@@ -58,30 +58,43 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Reads the header of the response.
+        /// Creates a header.
         /// </summary>
+        /// <param name="flag">
+        /// The header flag.
+        /// </param>
+        /// <param name="length">
+        /// Length of bytes that will be sent.
+        /// </param>
         /// <returns>
-        /// Flag and Length of sent bytes.
+        /// An array of the header bytes.
         /// </returns>
-        public (HeaderFlag flag, int length) ReadHeader()
+        public byte[] CreateHeader(HeaderFlag flag, int length)
         {
-            return ReadHeader(CancellationToken.None);
+            if (length > ushort.MaxValue)
+            {
+                throw new ArgumentException("Length is too long.");
+            }
+
+            return !flag.IsParameterless() ? new byte[]
+            {
+                (byte)flag,
+                (byte)(length / 256),
+                (byte)(length & 255)
+            } : new byte[] { (byte)flag };
         }
 
         /// <summary>
-        /// Reads the header of the response.
+        /// Reads the header from the stream.
         /// </summary>
-        /// <param name="cancellationToken">
-        /// A token for aborting this operation.
-        /// </param>
         /// <returns>
-        /// Flag and Length of sent bytes.
+        /// The header flag and Length of the text (argument) for that flag.
         /// </returns>
-        public virtual (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
+        public (HeaderFlag flag, int length) ReadHeader()
         {
-            HeaderFlag flag = HeaderFlag.Unknown;
+            HeaderFlag flag;
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (true)
             {
                 int data = ReadByte();
                 if (data != -1)
@@ -91,38 +104,9 @@ namespace SAPTeam.Zily
                 }
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            int length = Math.Max(0, (ReadByte() * 256) + ReadByte());
+            int length = flag.IsParameterless() ? 0 : Math.Max(0, (ReadByte() * 256) + ReadByte());
 
             return (flag, length);
-        }
-
-        /// <summary>
-        /// Creates a header.
-        /// </summary>
-        /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
-        /// </param>
-        /// <param name="length">
-        /// Length of bytes that will be sent.
-        /// </param>
-        /// <returns>
-        /// An array of header bytes.
-        /// </returns>
-        public virtual byte[] CreateHeader(HeaderFlag flag, int length)
-        {
-            if (length > ushort.MaxValue)
-            {
-                throw new ArgumentException("Length is too long.");
-            }
-
-            return length > 0 ? new byte[]
-            {
-                (byte)flag,
-                (byte)(length / 256),
-                (byte)(length & 255)
-            } : new byte[] { (byte)flag };
         }
 
         /// <summary>
@@ -207,7 +191,7 @@ namespace SAPTeam.Zily
             {
                 case HeaderFlag.Write:
                     var text = ReadString(length);
-                    logger.Information("Writing \"{text}\" to the console", text);
+                    logger.Information("Writing \"{text}\" to the console", text.Replace("\n", ""));
 
                     if (Stream is MemoryStream) // Probably it is a test...
                     {
@@ -262,7 +246,7 @@ namespace SAPTeam.Zily
         /// <exception cref="Exception"></exception>
         public virtual bool ParseResponse(HeaderFlag flag, int length)
         {
-            logger.Debug("Trying to parse a header with {flag} flag as a response", flag);
+            logger.Debug("Parsing a response header with {flag} flag", flag);
 
             switch (flag)
             {

@@ -15,6 +15,19 @@ namespace SAPTeam.Zily
     public class ZilyPipeStream : ZilyStream
     {
         readonly PipeStream _pipe;
+        bool _online;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this connection is online
+        /// </summary>
+        public bool IsOnline
+        {
+            get
+            {
+                return _online && _pipe.IsConnected;
+            }
+            set => _online = value;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyPipeStream"/>.
@@ -33,34 +46,6 @@ namespace SAPTeam.Zily
             {
                 throw new ArgumentException("The pipe stream must support read and write operation.");
             }
-        }
-
-        // The optimized header feature is not working in pipe stream.
-        // So we temporarily patch it...
-        /// <inheritdoc/>
-        public override (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
-        {
-            var flag = (HeaderFlag)ReadByte();
-            int length = ReadByte() * 256;
-            length += ReadByte();
-
-            return (flag, length);
-        }
-
-        /// <inheritdoc/>
-        public override byte[] CreateHeader(HeaderFlag flag, int length)
-        {
-            if (length > ushort.MaxValue)
-            {
-                throw new ArgumentException("Length is too long.");
-            }
-
-            return new byte[]
-            {
-                (byte)flag,
-                (byte)(length / 256),
-                (byte)(length & 255)
-            };
         }
 
         /// <summary>
@@ -93,14 +78,14 @@ namespace SAPTeam.Zily
                 logger = Serilog.Core.Logger.None;
             }
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested && IsOnline)
             {
                 try
                 {
-                    var header = ReadHeader(cancellationToken);
+                    var header = ReadHeader();
                     Parse(header);
                 }
-                catch (Exception)
+                catch (IOException)
                 {
                     break;
                 }
@@ -118,8 +103,11 @@ namespace SAPTeam.Zily
         public override void Close()
         {
             logger.Information("Closing connection");
-            WriteCommand(HeaderFlag.Disconnected);
-            // _pipe.Close();
+            if (IsOnline)
+            {
+                WriteCommand(HeaderFlag.Disconnected);
+                IsOnline = false;
+            }
         }
     }
 }

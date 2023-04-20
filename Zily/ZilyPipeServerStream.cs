@@ -45,6 +45,7 @@ namespace SAPTeam.Zily
 
                 if (header.flag == HeaderFlag.Connected)
                 {
+                    IsOnline = true;
                     break;
                 }
             }
@@ -62,6 +63,8 @@ namespace SAPTeam.Zily
                         break;
                     case HeaderFlag.Disconnected:
                         logger.Error("The client has disconnected from the server");
+                        IsOnline = false;
+                        Close();
                         break;
                     default:
                         return false;

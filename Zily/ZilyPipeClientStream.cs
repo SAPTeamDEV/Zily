@@ -55,6 +55,7 @@ namespace SAPTeam.Zily
             }
 
             WriteCommand(HeaderFlag.Connected);
+            IsOnline = true;
             logger.Information("Connected to the Zily server v{version}", StreamVersion);
         }
 
@@ -67,6 +68,8 @@ namespace SAPTeam.Zily
                 {
                     case HeaderFlag.Disconnected:
                         logger.Error("Zily server is closed");
+                        IsOnline = false;
+                        Close();
                         break;
                     default:
                         return false;

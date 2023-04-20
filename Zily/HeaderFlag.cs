@@ -12,6 +12,8 @@ namespace SAPTeam.Zily
         /// <summary>
         /// An unknown flag.
         /// </summary>
+        [ResponseFlag(true)]
+        [RequestFlag(true)]
         Unknown,
 
         /// <summary>
