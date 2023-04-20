@@ -17,41 +17,49 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Indicates a normal state
         /// </summary>
+        [ResponseFlag(true)]
         Ok,
 
         /// <summary>
         /// Indicates an abnormal state. The error text must be sent with this header flag.
         /// </summary>
+        [ResponseFlag(false)]
         Fail,
 
         /// <summary>
         /// Indicates a potential abnormal state.
         /// </summary>
+        [ResponseFlag(false)]
         Warn,
 
         /// <summary>
         /// Indicates an established connection.
         /// </summary>
+        [ResponseFlag(true)]
         Connected,
 
         /// <summary>
         /// Indicates an refused connection.
         /// </summary>
+        [ResponseFlag(true)]
         Disconnected,
 
         /// <summary>
         /// Indicates a response that represents the protocol version.
         /// </summary>
+        [ResponseFlag(false)]
         VersionInfo,
 
         /// <summary>
         /// A request for writing a text to the console.
         /// </summary>
-        Write = 10,
+        [RequestFlag(false)]
+        Write,
 
         /// <summary>
         /// A request for getting the protocol version.
         /// </summary>
-        Version = 11,
+        [RequestFlag(true)]
+        Version,
     }
 }
