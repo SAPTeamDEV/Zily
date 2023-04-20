@@ -320,7 +320,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteCommand(HeaderFlag flag, string text = null)
         {
-            logger.Debug("Writing data with flag {flag} and message \"{text}\"", flag, text.Replace("\n", ""));
+            logger.Debug("Writing data with flag {flag} and message \"{text}\"", flag, text != null ? text.Replace("\n", "") : null);
             byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
             byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
