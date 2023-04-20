@@ -75,6 +75,14 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Listens to all incoming requests.
         /// </summary>
+        public void Listen()
+        {
+            Listen(CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Listens to all incoming requests.
+        /// </summary>
         /// <param name="cancellationToken">
         /// A token for terminating the listener.
         /// </param>
