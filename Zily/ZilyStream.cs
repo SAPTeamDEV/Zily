@@ -60,10 +60,19 @@ namespace SAPTeam.Zily
         /// </returns>
         public (HeaderFlag flag, int length) ReadHeader()
         {
-            var flag = (HeaderFlag)ReadByte();
+            HeaderFlag flag;
 
-            int length = ReadByte() * 256;
-            length += ReadByte();
+            while (true)
+            {
+                int data = ReadByte();
+                if (data != -1)
+                {
+                    flag = (HeaderFlag)data;
+                    break;
+                }
+            }
+
+            int length = Math.Max(0, (ReadByte() * 256) + ReadByte());
 
             return (flag, length);
         }
@@ -84,15 +93,15 @@ namespace SAPTeam.Zily
         {
             if (length > ushort.MaxValue)
             {
-                length = ushort.MaxValue;
+                throw new ArgumentException("Length is too long.");
             }
 
-            return new byte[]
+            return length > 0 ? new byte[]
             {
                 (byte)flag,
                 (byte)(length / 256),
                 (byte)(length & 255)
-            };
+            } : new byte[] { (byte)flag };
         }
 
         /// <summary>

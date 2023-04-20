@@ -15,6 +15,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
+            Assert.Equal(-1, zs.ReadByte());
             zs.Write("Hello");
             Assert.Equal("Hello", zs.ReadString());
         }
