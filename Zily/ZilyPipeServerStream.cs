@@ -51,10 +51,29 @@ namespace SAPTeam.Zily
         }
 
         /// <inheritdoc/>
+        public override bool ParseResponse(HeaderFlag flag, int length)
+        {
+            if (!base.ParseResponse(flag, length))
+            {
+                switch (flag)
+                {
+                    case HeaderFlag.Connected:
+                        break;
+                    case HeaderFlag.Disconnected:
+                        break;
+                    default:
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <inheritdoc/>
         public override void Close()
         {
-            _serverStream.Disconnect();
             base.Close();
+            _serverStream.Disconnect();
         }
     }
 }

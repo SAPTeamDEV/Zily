@@ -82,25 +82,6 @@ namespace SAPTeam.Zily
             return true;
         }
 
-        /// <inheritdoc/>
-        public override bool ParseResponse(HeaderFlag flag, int length)
-        {
-            if (!base.ParseResponse(flag, length))
-            {
-                switch (flag)
-                {
-                    case HeaderFlag.Connected:
-                        break;
-                    case HeaderFlag.Disconnected:
-                        break;
-                    default:
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
         /// <summary>
         /// Listens to all incoming requests.
         /// </summary>
@@ -139,6 +120,7 @@ namespace SAPTeam.Zily
                 }
                 catch (Exception)
                 {
+                    break;
                 }
             }
 
@@ -151,7 +133,8 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override void Close()
         {
-            _pipe.Close();
+            WriteCommand(HeaderFlag.Disconnected);
+            // _pipe.Close();
         }
     }
 }
