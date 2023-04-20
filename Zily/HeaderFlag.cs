@@ -10,34 +10,39 @@ namespace SAPTeam.Zily
     public enum HeaderFlag
     {
         /// <summary>
+        /// An unknown flag.
+        /// </summary>
+        Unknown,
+
+        /// <summary>
         /// Indicates a normal state
         /// </summary>
-        Ok = 1,
+        Ok,
 
         /// <summary>
         /// Indicates an abnormal state. The error text must be sent with this header flag.
         /// </summary>
-        Fail = 2,
+        Fail,
 
         /// <summary>
         /// Indicates a potential abnormal state.
         /// </summary>
-        Warn = 3,
+        Warn,
 
         /// <summary>
         /// Indicates an established connection.
         /// </summary>
-        Connected = 4,
+        Connected,
 
         /// <summary>
         /// Indicates an refused connection.
         /// </summary>
-        Disconnected = 5,
+        Disconnected,
 
         /// <summary>
         /// Indicates a response that represents the protocol version.
         /// </summary>
-        VersionInfo = 6,
+        VersionInfo,
 
         /// <summary>
         /// A request for writing a text to the console.
@@ -48,10 +53,5 @@ namespace SAPTeam.Zily
         /// A request for getting the protocol version.
         /// </summary>
         Version = 11,
-
-        /// <summary>
-        /// An unsupported flag.
-        /// </summary>
-        Unsupported = 99,
     }
 }

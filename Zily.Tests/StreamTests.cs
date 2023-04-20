@@ -16,7 +16,7 @@ namespace SAPTeam.Zily.Tests
             var zs = new ZilyStream(ms);
 
             Assert.Equal(-1, zs.ReadByte());
-            zs.Write("Hello");
+            zs.WriteCommand(HeaderFlag.Write, "Hello");
             Assert.Equal("Hello", zs.ReadString());
         }
 
@@ -26,16 +26,16 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.Write("test");
+            zs.WriteCommand(HeaderFlag.Write, "test");
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
-            zs.Write("");
+            zs.WriteCommand(HeaderFlag.Write, "");
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
             zs.WriteCommand(HeaderFlag.Write);
             Assert.Throws<InvalidOperationException>(() => zs.Parse());
 
-            zs.WriteCommand(HeaderFlag.Unsupported, "test");
+            zs.WriteCommand(HeaderFlag.Unknown, "test");
             zs.Parse();
             Assert.Throws<Exception>(() => zs.Parse());
         }
@@ -97,7 +97,7 @@ namespace SAPTeam.Zily.Tests
             var ms = new MemoryStream();
             var zs = new ZilyStream(ms);
 
-            zs.Write("test");
+            zs.WriteCommand(HeaderFlag.Write, "test");
             var header = zs.ReadHeader();
             var parseResult = zs.ParseResponse(header);
             Assert.False(parseResult);

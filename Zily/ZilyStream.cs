@@ -79,7 +79,7 @@ namespace SAPTeam.Zily
         /// </returns>
         public virtual (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
         {
-            HeaderFlag flag = HeaderFlag.Ok;
+            HeaderFlag flag = HeaderFlag.Unknown;
 
             while (!cancellationToken.IsCancellationRequested)
             {
