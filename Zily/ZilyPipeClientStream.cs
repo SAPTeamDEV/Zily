@@ -46,7 +46,12 @@ namespace SAPTeam.Zily
             logger.Debug("Checking server version");
             if (StreamVersion.Major != API.Major)
             {
-                // Will completed in the future
+                IsOnline = true; // Prepare for disconnection
+                logger.Fatal($"The {(API.Major > StreamVersion.Major ? "server" : "client")} is outdated");
+                Close();
+            }
+            else if (StreamVersion.Minor != API.Minor)
+            {
                 logger.Warning("Client version is {cVer} but the server version is {sVer}. Connection may be unstable.", API, StreamVersion);
             }
             else
