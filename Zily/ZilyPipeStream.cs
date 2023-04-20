@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using Serilog;
 using System.Threading;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace SAPTeam.Zily
 {
@@ -32,6 +33,34 @@ namespace SAPTeam.Zily
             {
                 throw new ArgumentException("The pipe stream must support read and write operation.");
             }
+        }
+
+        // The optimized header feature is not working in pipe stream.
+        // So we temporarily patch it...
+        /// <inheritdoc/>
+        public override (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
+        {
+            var flag = (HeaderFlag)ReadByte();
+            int length = ReadByte() * 256;
+            length += ReadByte();
+
+            return (flag, length);
+        }
+
+        /// <inheritdoc/>
+        public override byte[] CreateHeader(HeaderFlag flag, int length)
+        {
+            if (length > ushort.MaxValue)
+            {
+                throw new ArgumentException("Length is too long.");
+            }
+
+            return new byte[]
+            {
+                (byte)flag,
+                (byte)(length / 256),
+                (byte)(length & 255)
+            };
         }
 
         /// <inheritdoc/>

@@ -49,5 +49,12 @@ namespace SAPTeam.Zily
                 }
             }
         }
+
+        /// <inheritdoc/>
+        public override void Close()
+        {
+            _serverStream.Disconnect();
+            base.Close();
+        }
     }
 }

@@ -77,9 +77,9 @@ namespace SAPTeam.Zily
         /// <returns>
         /// Flag and Length of sent bytes.
         /// </returns>
-        public (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
+        public virtual (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
         {
-            HeaderFlag flag;
+            HeaderFlag flag = HeaderFlag.Unsupported;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -110,7 +110,7 @@ namespace SAPTeam.Zily
         /// <returns>
         /// An array of header bytes.
         /// </returns>
-        public byte[] CreateHeader(HeaderFlag flag, int length)
+        public virtual byte[] CreateHeader(HeaderFlag flag, int length)
         {
             if (length > ushort.MaxValue)
             {
@@ -263,8 +263,9 @@ namespace SAPTeam.Zily
                     logger.Warning(ReadString(length));
                     break;
                 case HeaderFlag.VersionInfo:
-                    StreamVersion = new Version(ReadString(length));
-                    logger.Debug("Stream protocol version is {version}", StreamVersion);
+                    var rawVersion = ReadString(length);
+                    logger.Debug("Stream protocol version is {version}", rawVersion);
+                    StreamVersion = new Version(rawVersion);
                     break;
                 case HeaderFlag.Fail:
                     var e = new Exception(ReadString(length));
@@ -324,10 +325,7 @@ namespace SAPTeam.Zily
             byte[] header = CreateHeader(flag, body.Length);
             byte[] buffer = header.Concat(body).ToArray();
 
-            foreach (var data in buffer)
-            {
-                WriteByte(data);
-            }
+            Write(buffer, 0, buffer.Length);
 
             if (Stream is MemoryStream)
             {
