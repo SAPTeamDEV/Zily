@@ -4,6 +4,7 @@ using System.IO.Pipes;
 using System.IO;
 using System.Text;
 using Serilog;
+using System.Threading;
 
 namespace SAPTeam.Zily
 {
@@ -69,6 +70,21 @@ namespace SAPTeam.Zily
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Listens to all incoming requests.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// A token for terminating the listener.
+        /// </param>
+        public void Listen(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var header = ReadHeader(cancellationToken);
+                Parse(header);
+            }
         }
 
         /// <inheritdoc/>

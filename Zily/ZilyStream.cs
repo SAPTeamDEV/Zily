@@ -3,6 +3,7 @@ using System.Text;
 using System;
 using System.Linq;
 using Serilog;
+using System.Threading;
 
 namespace SAPTeam.Zily
 {
@@ -60,9 +61,23 @@ namespace SAPTeam.Zily
         /// </returns>
         public (HeaderFlag flag, int length) ReadHeader()
         {
+            return ReadHeader(CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Reads the header of the response.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// A token for aborting this operation.
+        /// </param>
+        /// <returns>
+        /// Flag and Length of sent bytes.
+        /// </returns>
+        public (HeaderFlag flag, int length) ReadHeader(CancellationToken cancellationToken)
+        {
             HeaderFlag flag;
 
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 int data = ReadByte();
                 if (data != -1)
@@ -71,6 +86,8 @@ namespace SAPTeam.Zily
                     break;
                 }
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             int length = Math.Max(0, (ReadByte() * 256) + ReadByte());
 
