@@ -8,7 +8,7 @@ using Serilog;
 namespace SAPTeam.Zily
 {
     /// <summary>
-    /// Represents a <see cref="ZilyStream"/> for communicating through a In-Out named pipe.
+    /// Represents a <see cref="ZilyStream"/> for communicating through an In-Out named pipe.
     /// </summary>
     public class ZilyPipeStream : ZilyStream
     {
@@ -21,7 +21,7 @@ namespace SAPTeam.Zily
         /// Initializes a new instance of the <see cref="ZilyPipeStream"/>.
         /// </summary>
         /// <param name="pipeStream">
-        /// An instance of the <see cref="PipeStream"/> that supports In-Out direction.
+        /// An instance of the <see cref="PipeStream"/> that supports In-Out directions.
         /// </param>
         /// <param name="logger">
         /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
@@ -55,6 +55,7 @@ namespace SAPTeam.Zily
             return true;
         }
 
+        /// <inheritdoc/>
         public override bool ParseResponse(HeaderFlag flag, int length)
         {
             if (!base.ParseResponse(flag, length))
