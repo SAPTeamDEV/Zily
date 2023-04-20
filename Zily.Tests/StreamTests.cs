@@ -37,7 +37,7 @@ namespace SAPTeam.Zily.Tests
 
             zs.WriteCommand(HeaderFlag.Unknown, "test");
             zs.Parse();
-            Assert.Throws<Exception>(() => zs.Parse());
+            Assert.Throws<ApplicationException>(() => zs.Parse());
         }
 
         [Fact]
@@ -85,9 +85,9 @@ namespace SAPTeam.Zily.Tests
                 zs.ParseResponse(header);
                 Assert.Fail("This code block must throw an Exception.");
             }
-            catch (Exception e)
+            catch (ApplicationException ae)
             {
-                Assert.Equal("", e.Message);
+                Assert.Equal("", ae.Message);
             }
         }
 
@@ -99,9 +99,8 @@ namespace SAPTeam.Zily.Tests
 
             zs.WriteCommand(HeaderFlag.Write, "test");
             var header = zs.ReadHeader();
-            var parseResult = zs.ParseResponse(header);
-            Assert.False(parseResult);
-            Assert.Equal("test", zs.ReadString(header.length));
+            Assert.Throws<ArgumentException>(() => zs.ParseResponse(header));
+            Assert.Throws<ApplicationException>(() => zs.Parse());
         }
 
         [Fact]

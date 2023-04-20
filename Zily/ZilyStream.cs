@@ -185,7 +185,16 @@ namespace SAPTeam.Zily
         /// </returns>
         public virtual bool ParseRequest(HeaderFlag flag, int length)
         {
-            logger.Debug("Parsing a request with flag {flag}", flag);
+            logger.Debug("Parsing a request header with {flag} flag", flag);
+
+            if (!flag.IsRequest())
+            {
+                var ae = new ArgumentException($"The flag {flag} is not a request flag");
+                logger.Fatal(ae, "The flag {flag} is not a request flag", flag);
+                ReadString(length); // Consume sent data.
+                WriteCommand(HeaderFlag.Fail, ae.Message);
+                throw ae;
+            }
 
             switch (flag)
             {
@@ -243,10 +252,19 @@ namespace SAPTeam.Zily
         /// <returns>
         /// <see langword="true"/> if this method could handle the given flag, otherwise it returns <see langword="false"/>.
         /// </returns>
-        /// <exception cref="Exception"></exception>
+        /// <exception cref="ApplicationException"></exception>
         public virtual bool ParseResponse(HeaderFlag flag, int length)
         {
             logger.Debug("Parsing a response header with {flag} flag", flag);
+
+            if (!flag.IsResponse())
+            {
+                var ae = new ArgumentException($"The flag {flag} is not a response flag");
+                logger.Fatal(ae, "The flag {flag} is not a response flag", flag);
+                ReadString(length); // Consume sent data.
+                WriteCommand(HeaderFlag.Fail, ae.Message);
+                throw ae;
+            }
 
             switch (flag)
             {
@@ -262,7 +280,7 @@ namespace SAPTeam.Zily
                     StreamVersion = new Version(rawVersion);
                     break;
                 case HeaderFlag.Fail:
-                    var e = new Exception(ReadString(length));
+                    var e = new ApplicationException(ReadString(length));
                     logger.Fatal(e, "Stream returns an error");
                     throw e;
                 default:
