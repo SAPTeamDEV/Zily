@@ -75,9 +75,12 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Listens to all incoming requests.
         /// </summary>
-        public void Listen()
+        /// <param name="suppressLogger">
+        /// Determines whether the logger should be stopped during listening.
+        /// </param>
+        public void Listen(bool suppressLogger = true)
         {
-            Listen(CancellationToken.None);
+            Listen(CancellationToken.None, suppressLogger);
         }
 
         /// <summary>
@@ -86,12 +89,33 @@ namespace SAPTeam.Zily
         /// <param name="cancellationToken">
         /// A token for terminating the listener.
         /// </param>
-        public void Listen(CancellationToken cancellationToken)
+        /// <param name="suppressLogger">
+        /// Determines whether the logger should be stopped during listening.
+        /// </param>
+        public void Listen(CancellationToken cancellationToken, bool suppressLogger = true)
         {
+            ILogger _logger = null;
+            if (suppressLogger)
+            {
+                _logger = logger;
+                logger = Serilog.Core.Logger.None;
+            }
+
             while (!cancellationToken.IsCancellationRequested)
             {
-                var header = ReadHeader(cancellationToken);
-                Parse(header);
+                try
+                {
+                    var header = ReadHeader(cancellationToken);
+                    Parse(header);
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            if (suppressLogger)
+            {
+                logger = _logger;
             }
         }
 

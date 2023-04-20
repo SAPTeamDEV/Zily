@@ -28,7 +28,11 @@ namespace SAPTeam.Zily
         public Stream Stream { get; }
 
         private readonly UnicodeEncoding streamEncoding;
-        private readonly ILogger logger;
+
+        /// <summary>
+        /// Gets or Sets the logger.
+        /// </summary>
+        protected ILogger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyStream"/>.
