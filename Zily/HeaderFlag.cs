@@ -49,11 +49,9 @@ namespace SAPTeam.Zily
         /// </summary>
         Version = 11,
 
-#if DEBUG
         /// <summary>
         /// An unsupported flag.
         /// </summary>
         Unsupported = 99,
-#endif
     }
 }
