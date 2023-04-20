@@ -12,10 +12,7 @@ namespace SAPTeam.Zily
     /// </summary>
     public class ZilyPipeStream : ZilyStream
     {
-        /// <summary>
-        /// Gets the underlying <see cref="PipeStream"/>.
-        /// </summary>
-        public PipeStream Pipe { get; }
+        readonly PipeStream _pipe;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyPipeStream"/>.
@@ -28,9 +25,9 @@ namespace SAPTeam.Zily
         /// </param>
         public ZilyPipeStream(PipeStream pipeStream, ILogger logger = null) : base(pipeStream, logger)
         {
-            Pipe = pipeStream;
+            _pipe = pipeStream;
 
-            if (!Pipe.CanRead || !Pipe.CanWrite)
+            if (!_pipe.CanRead || !_pipe.CanWrite)
             {
                 throw new ArgumentException("The pipe stream must support read and write operation.");
             }
@@ -74,20 +71,10 @@ namespace SAPTeam.Zily
             return true;
         }
 
-        /// <summary>
-        /// Sends a command to the stream, then waits for receiving response and parses it.
-        /// </summary>
-        /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
-        /// </param>
-        /// <param name="text">
-        /// The text (argument) for the requested action or response to a request.
-        /// </param>
-        public void Send(HeaderFlag flag, string text = null)
+        /// <inheritdoc/>
+        public override void Close()
         {
-            WriteCommand(flag, text);
-            Pipe.WaitForPipeDrain();
-            Parse();
+            _pipe.Close();
         }
     }
 }

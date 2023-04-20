@@ -12,10 +12,7 @@ namespace SAPTeam.Zily
     /// </summary>
     public class ZilyPipeServerStream : ZilyPipeStream
     {
-        /// <summary>
-        /// Gets the underlying <see cref="NamedPipeServerStream"/>.
-        /// </summary>
-        public NamedPipeServerStream PipeServer { get; }
+        readonly NamedPipeServerStream _serverStream;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyPipeServerStream"/>.
@@ -28,7 +25,7 @@ namespace SAPTeam.Zily
         /// </param>
         public ZilyPipeServerStream(NamedPipeServerStream pipeServer, ILogger logger = null) : base(pipeServer, logger)
         {
-            PipeServer = pipeServer;
+            _serverStream = pipeServer;
         }
 
         /// <summary>
@@ -36,14 +33,14 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Accept()
         {
-            PipeServer.WaitForConnection();
+            _serverStream.WaitForConnection();
 
             while (true)
             {
                 var header = ReadHeader();
                 if (header.flag != HeaderFlag.Connected)
                 {
-                    Parse();
+                    Parse(header);
                 }
                 else
                 {

@@ -319,5 +319,21 @@ namespace SAPTeam.Zily
 
             logger.Information("Wrote {length} bytes", buffer.Length);
         }
+
+        /// <summary>
+        /// Sends a command to the stream, then waits for receiving response and parses it.
+        /// </summary>
+        /// <param name="flag">
+        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// </param>
+        /// <param name="text">
+        /// The text (argument) for the requested action or response to a request.
+        /// </param>
+        public void Send(HeaderFlag flag, string text = null)
+        {
+            WriteCommand(flag, text);
+            var header = ReadHeader();
+            Parse(header);
+        }
     }
 }
