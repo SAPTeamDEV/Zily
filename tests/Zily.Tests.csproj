@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Zily\Zily.csproj" />
+    <ProjectReference Include="..\src\Zily.csproj" />
   </ItemGroup>
 
 </Project>
