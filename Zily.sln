@@ -7,10 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zily", "src\Zily.csproj", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zily.Tests", "tests\Zily.Tests.csproj", "{24763FE1-827E-4684-82BB-3FD55BE495A7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0081CEF1-B6C5-4C66-AE30-FA5D5C9C13FE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BEA1EF78-5E30-421D-910B-DAE8DB4A6612}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
-		version.json = src\version.json
+		src\version.json = src\version.json
 	EndProjectSection
 EndProject
 Global
