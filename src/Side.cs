@@ -14,9 +14,54 @@ namespace SAPTeam.Zily
         public string Protocol { get; }
 
         /// <inheritdoc/>
-        public List<string> Identifiers { get; }
+        public string[] Identifiers { get; }
 
         /// <inheritdoc/>
         public string Name { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Side"/>.
+        /// </summary>
+        /// <param name="protocol">
+        /// The name of protocol implemented by this side.
+        /// </param>
+        public Side(string protocol)
+        {
+            Protocol = protocol;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Side"/>.
+        /// </summary>
+        /// <param name="protocol">
+        /// The name of protocol implemented by this side.
+        /// </param>
+        /// <param name="name">
+        /// The name of the side.
+        /// </param>
+        public Side(string protocol, string name)
+        {
+            Protocol = protocol;
+            Name = name;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Side"/>.
+        /// </summary>
+        /// <param name="protocol">
+        /// The name of protocol implemented by this side.
+        /// </param>
+        /// <param name="name">
+        /// The name of the side.
+        /// </param>
+        /// <param name="identifiers">
+        /// The identifiers of the side.
+        /// </param>
+        public Side(string protocol, string name, string[] identifiers)
+        {
+            Protocol = protocol;
+            Name = name;
+            Identifiers = identifiers;
+        }
     }
 }
