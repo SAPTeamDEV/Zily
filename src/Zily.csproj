@@ -27,10 +27,25 @@
    </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="StreamWrapper.cs" />
+    <Compile Remove="ZilyPipeClientStream.cs" />
+    <Compile Remove="ZilyPipeServerStream.cs" />
+    <Compile Remove="ZilyPipeStream.cs" />
+    <Compile Remove="ZilyStream.cs" />
+    <Compile Remove="ZilyTextWriter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="StreamWrapper.cs" />
+    <None Include="ZilyPipeClientStream.cs" />
+    <None Include="ZilyPipeServerStream.cs" />
+    <None Include="ZilyPipeStream.cs" />
+    <None Include="ZilyStream.cs" />
+    <None Include="ZilyTextWriter.cs" />
   </ItemGroup>
     
     <ItemGroup>
