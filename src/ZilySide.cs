@@ -59,7 +59,20 @@ namespace SAPTeam.Zily
         /// </param>
         public virtual void ParseHeader(ZilyHeader header)
         {
-            
+            switch (header.Flag)
+            {
+                case ZilyHeaderFlag.Ok:
+                case ZilyHeaderFlag.Warn:
+                    // It's ok.
+                    break;
+                case ZilyHeaderFlag.Fail:
+                    // Throw an exception with the error message.
+                    throw new ZilyException(header.Text);
+                default:
+                    // Throw an exception because the response is unknown.
+                    throw new ArgumentException("Invalid response.");
+
+            }
         }
     }
 }

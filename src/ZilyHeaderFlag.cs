@@ -10,7 +10,7 @@ namespace SAPTeam.Zily
     public class ZilyHeaderFlag
     {
         /// <summary>
-        /// An unknown flag.
+        /// An unknown state.
         /// </summary>
         public const int Unknown = 0;
 
