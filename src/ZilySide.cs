@@ -10,6 +10,13 @@ namespace SAPTeam.Zily
         int last_request;
 
         /// <summary>
+        /// Gets the proper flag for disconnect message.
+        /// </summary>
+        public virtual int DisconnectFlag => ZilyHeaderFlag.Disconnected;
+
+        internal ZilyStream zs;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ZilySide"/>.
         /// </summary>
         /// <param name="protocol">
@@ -68,6 +75,12 @@ namespace SAPTeam.Zily
                 case ZilyHeaderFlag.Fail:
                     // Throw an exception with the error message.
                     throw new ZilyException(header.Text);
+                case ZilyHeaderFlag.Connected:
+                    zs.IsOnline = true;
+                    break;
+                case ZilyHeaderFlag.Disconnected:
+                    zs.IsOnline = false;
+                    break;
                 default:
                     // Throw an exception because the response is unknown.
                     throw new ArgumentException("Invalid response.");

@@ -4,6 +4,8 @@ using System;
 using System.Linq;
 using Serilog;
 using System.Threading;
+using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 
 namespace SAPTeam.Zily
 {
@@ -13,19 +15,19 @@ namespace SAPTeam.Zily
     public partial class ZilyStream : Stream
     {
         /// <summary>
-        /// Gets the protocol version.
-        /// </summary>
-        public static Version API = new Version(2, 0);
-
-        /// <summary>
-        /// Gets the stream protocol version.
-        /// </summary>
-        public Version StreamVersion { get; private set; }
-
-        /// <summary>
         /// Gets the underlying <see cref="System.IO.Stream"/>.
         /// </summary>
         public Stream Stream { get; }
+
+        /// <summary>
+        /// Gets the underlying <see cref="ISide"/> that parses the incoming responses.
+        /// </summary>
+        public ZilySide Side { get; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this connection is online
+        /// </summary>
+        public bool IsOnline { get; set; }
 
         private readonly UnicodeEncoding streamEncoding;
 
@@ -40,10 +42,13 @@ namespace SAPTeam.Zily
         /// <param name="stream">
         /// An instance of <see cref="System.IO.Stream"/> with ability to read, write or both.
         /// </param>
+        /// <param name="side">
+        /// The <see cref="ZilySide"/> that parses the receiving responses.
+        /// </param>
         /// <param name="logger">
         /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
         /// </param>
-        public ZilyStream(Stream stream, ILogger logger = null)
+        public ZilyStream(Stream stream, ZilySide side, ILogger logger = null)
         {
             if (logger == null)
             {
@@ -53,62 +58,12 @@ namespace SAPTeam.Zily
             logger.Debug("Initializing a new Zily session");
 
             Stream = stream;
+            Side = side;
             streamEncoding = new UnicodeEncoding();
             this.logger = logger;
         }
 
-        /// <summary>
-        /// Creates a header.
-        /// </summary>
-        /// <param name="flag">
-        /// The header flag.
-        /// </param>
-        /// <param name="length">
-        /// Length of bytes that will be sent.
-        /// </param>
-        /// <returns>
-        /// An array of the header bytes.
-        /// </returns>
-        public byte[] CreateHeader(HeaderFlag flag, int length)
-        {
-            if (length > ushort.MaxValue)
-            {
-                throw new ArgumentException("Length is too long.");
-            }
-
-            return !flag.IsParameterless() ? new byte[]
-            {
-                (byte)flag,
-                (byte)(length / 256),
-                (byte)(length & 255)
-            } : new byte[] { (byte)flag };
-        }
-
-        /// <summary>
-        /// Reads the header from the stream.
-        /// </summary>
-        /// <returns>
-        /// The header flag and Length of the text (argument) for that flag.
-        /// </returns>
-        public (HeaderFlag flag, int length) ReadHeader()
-        {
-            HeaderFlag flag;
-
-            while (true)
-            {
-                int data = ReadByte();
-                if (data != -1)
-                {
-                    flag = (HeaderFlag)data;
-                    break;
-                }
-            }
-
-            int length = flag.IsParameterless() ? 0 : Math.Max(0, (ReadByte() * 256) + ReadByte());
-
-            return (flag, length);
-        }
-
+        /*
         /// <summary>
         /// Receives sent data and then parses it.
         /// </summary>
@@ -319,23 +274,24 @@ namespace SAPTeam.Zily
 
             return streamEncoding.GetString(buffer);
         }
+        */
 
         /// <summary>
-        /// Creates a header with the given flag and text then writes it beside the given <paramref name="text"/> to the stream.
+        /// Writes the given <see cref="ZilyHeader"/> to the stream.
         /// </summary>
-        /// <param name="flag">
-        /// The header flag.
+        /// <param name="header">
+        /// An instance of the <see cref="ZilyHeader"/> with outgoing data.
         /// </param>
-        /// <param name="text">
-        /// The text (argument) for the header flag.
-        /// </param>
-        public void WriteCommand(HeaderFlag flag, string text = null)
+        public void WriteCommand(ZilyHeader header)
         {
-            logger.Debug("Writing data with flag {flag} and message \"{text}\"", flag, text != null ? text.Replace("\n", "") : null);
-            byte[] body = text != null ? streamEncoding.GetBytes(text) : new byte[0];
-            byte[] header = CreateHeader(flag, body.Length);
-            byte[] buffer = header.Concat(body).ToArray();
+            if (!IsOnline)
+            {
+                throw new ZilyException("Zily is not connected.");
+            }
 
+            logger.Debug("Writing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+
+            Byte[] buffer = header.ToByteArray();
             Write(buffer, 0, buffer.Length);
 
             if (Stream is MemoryStream)
@@ -351,19 +307,67 @@ namespace SAPTeam.Zily
         }
 
         /// <summary>
-        /// Sends a command to the stream, then waits for receiving response and parses it.
+        /// Writes the given <see cref="ZilyHeader"/> to the stream, then waits for the response.
         /// </summary>
-        /// <param name="flag">
-        /// The header flag. Header flags are stored in the <see cref="HeaderFlag"/>.
+        /// <param name="header">
+        /// An instance of the <see cref="ZilyHeader"/> with outgoing data.
         /// </param>
-        /// <param name="text">
-        /// The text (argument) for the requested action or response to a request.
-        /// </param>
-        public void Send(HeaderFlag flag, string text = null)
+        public void Send(ZilyHeader header)
         {
-            WriteCommand(flag, text);
-            var header = ReadHeader();
-            ParseResponse(header);
+            WriteCommand(header);
+            ZilyHeader header2 = ZilyHeader.Parse(Stream);
+            Side.ParseHeader(header2);
+        }
+
+        /// <summary>
+        /// Listens to all incoming requests.
+        /// </summary>
+        /// <param name="cancellationToken">
+        /// A token for terminating the listener.
+        /// </param>
+        /// <param name="suppressLogger">
+        /// Determines whether the logger should be stopped during listening.
+        /// </param>
+        public void Listen(CancellationToken cancellationToken, bool suppressLogger = true)
+        {
+            logger.Information("Staring listener");
+            ILogger _logger = null;
+            if (suppressLogger)
+            {
+                _logger = logger;
+                logger = Serilog.Core.Logger.None;
+            }
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var header = ZilyHeader.Parse(Stream);
+                    Side.ParseHeader(header);
+                }
+                catch (IOException)
+                {
+                    break;
+                }
+            }
+
+            if (suppressLogger)
+            {
+                logger = _logger;
+            }
+
+            logger.Information("Listener has stopped");
+        }
+
+        /// <inheritdoc/>
+        public override void Close()
+        {
+            logger.Information("Closing connection");
+            if (IsOnline)
+            {
+                WriteCommand(new ZilyHeader(Side.DisconnectFlag));
+                IsOnline = false;
+            }
         }
     }
 }

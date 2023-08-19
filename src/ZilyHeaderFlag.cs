@@ -28,5 +28,15 @@ namespace SAPTeam.Zily
         /// Indicates a potential abnormal state.
         /// </summary>
         public const int Warn = 3;
+
+        /// <summary>
+        /// Indicates an established connection.
+        /// </summary>
+        public const int Connected = 4;
+
+        /// <summary>
+        /// Indicates an refused connection.
+        /// </summary>
+        public const int Disconnected = 5;
     }
 }

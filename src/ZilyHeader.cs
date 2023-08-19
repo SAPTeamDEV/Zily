@@ -70,7 +70,7 @@ namespace SAPTeam.Zily
         /// <returns>
         /// A new instance of the <see cref="ZilyHeader"/>.
         /// </returns>
-        public virtual ZilyHeader Parse(Stream stream)
+        public static ZilyHeader Parse(Stream stream)
         {
             int flag;
             string text = null;
