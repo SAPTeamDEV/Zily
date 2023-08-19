@@ -14,6 +14,9 @@ namespace SAPTeam.Zily
         public string Protocol { get; }
 
         /// <inheritdoc/>
+        public Version Version { get; }
+
+        /// <inheritdoc/>
         public string[] Identifiers { get; }
 
         /// <inheritdoc/>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace SAPTeam.Zily
 {
@@ -11,6 +12,11 @@ namespace SAPTeam.Zily
         /// Gets the protocol implemented by the <see cref="ISide"/>.
         /// </summary>
         string Protocol { get; }
+
+        /// <summary>
+        /// Gets the version of the <see cref="ISide"/>.
+        /// </summary>
+        Version Version { get; }
 
         /// <summary>
         /// Gets the identifiers of the <see cref="ISide"/>.
