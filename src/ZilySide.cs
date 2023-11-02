@@ -1,6 +1,6 @@
 ﻿using System;
 
-using Serilog;
+using Serilog.Core;
 
 namespace SAPTeam.Zily
 {
@@ -9,97 +9,113 @@ namespace SAPTeam.Zily
     /// </summary>
     public class ZilySide : Side
     {
-        int last_request;
+        /// <inheritdoc/>
+        public override string Protocol { get; } = "zily";
+
+        /// <inheritdoc/>
+        public override Version Version { get; } = new Version(1, 0);
+
+        /// <inheritdoc/>
+        public override string Name { get; } = "Zily";
 
         /// <summary>
         /// Gets the proper flag for disconnect message.
         /// </summary>
         public virtual int DisconnectFlag => ZilyHeaderFlag.Disconnected;
 
-        internal ZilyStream zs;
-        internal ILogger logger;
-
-        ZilyHeader OkHeader = new ZilyHeader(ZilyHeaderFlag.Ok);
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZilySide"/>.
+        /// Gets the <see cref="ZilyStream"/> that interacts with this Side.
         /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        public ZilySide(string protocol) : base(protocol, "Zily Side", new string[]{"zily"})
-        {
-            
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZilySide"/>.
-        /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        /// <param name="name">
-        /// The name of this zily instance.
-        /// </param>
-        public ZilySide(string protocol, string name) : base(protocol, name, new string[]{"zily", name})
-        {
-
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZilySide"/>.
-        /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        /// <param name="name">
-        /// The name of this zily instance.
-        /// </param>
-        /// <param name="identifiers">
-        /// The identifiers of this zily instance.
-        /// </param>
-        public ZilySide(string protocol, string name, string[] identifiers) : base(protocol, name, identifiers)
-        {
-            
-        }
+        protected ZilyStream Parent { get; private set; }
 
         /// <summary>
         /// Parses the given <see cref="ZilyHeader"/>.
         /// </summary>
         /// <param name="header">
-        /// The parsed header object.
+        /// The header object.
         /// </param>
         public virtual void ParseHeader(ZilyHeader header)
         {
+            Parent.logger.Debug("Parsing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Ok:
+                    if (Parent.LastRequest > 1)
+                    {
+                        ParseResponse(Parent.LastRequest, header.Text);
+                        Parent.LastRequest = 0;
+                    }
+                    break;
                 case ZilyHeaderFlag.Warn:
-                    // It's ok.
+                    Parent.logger.Warning(header.Text);
                     break;
                 case ZilyHeaderFlag.Fail:
-                    // Throw an exception with the error message.
-                    throw new ZilyException(header.Text);
+                    Parent.logger.Error(header.Text);
+                    break;
                 case ZilyHeaderFlag.Connected:
-                    zs.IsOnline = true;
+                    Parent.IsOnline = true;
                     break;
                 case ZilyHeaderFlag.Disconnected:
-                    zs.IsOnline = false;
+                    Parent.IsOnline = false;
+                    break;
+                case ZilyHeaderFlag.SideIdentifier:
+                    Parent.WriteCommand(new ZilyHeader(ZilyHeaderFlag.Ok, GetIdentifier()));
                     break;
                 case ZilyHeaderFlag.Write:
                     Console.Write(header.Text);
                     Ok();
                     break;
                 default:
-                    // Throw an exception because the response is unknown.
-                    throw new ArgumentException("Invalid response.");
-
+                    Parent.logger.Error("Flag is invalid: {flag}", header.Flag);
+                    break;
             }
         }
 
+        public virtual void ParseResponse(int lastRequestFlag, string responseText)
+        {
+            switch (lastRequestFlag)
+            {
+                case ZilyHeaderFlag.SideIdentifier:
+                    var otherSide = Parse(responseText);
+                    if (Protocol != otherSide.Protocol || Version.Major != otherSide.Version.Major)
+                    {
+                        Parent.logger.Fatal("Cannot connect to the server");
+                        Parent.Close();
+                    }
+                    else
+                    {
+                        Parent.OtherSide = otherSide;
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Set corresponding <see cref="ZilyStream"/> as parent object of this Side.
+        /// </summary>
+        /// <param name="parent">
+        /// An instance of <see cref="ZilyStream"/>.
+        /// </param>
+        /// <exception cref="ArgumentException"></exception>
+        public void SetParent(ZilyStream parent)
+        {
+            if (Parent == null)
+            {
+                Parent = parent;
+            }
+            else
+            {
+                throw new ArgumentException("The Parent property is already set.");
+            }
+        }
+
+        /// <summary>
+        /// Sends a Ok message.
+        /// </summary>
         protected void Ok()
         {
-            zs.WriteCommand(OkHeader);
+            Parent.WriteCommand(ZilyHeader.Ok);
         }
     }
 }

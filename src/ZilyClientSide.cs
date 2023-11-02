@@ -7,55 +7,13 @@ namespace SAPTeam.Zily
     /// </summary>
     public class ZilyClientSide : ZilySide
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZilyClientSide"/>.
-        /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        public ZilyClientSide(string protocol) : base(protocol, "Zily Side", new string[]{"zily"})
-        {
-            
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZilyClientSide"/>.
-        /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        /// <param name="name">
-        /// The name of this zily instance.
-        /// </param>
-        public ZilyClientSide(string protocol, string name) : base(protocol, name, new string[]{"zily", name})
-        {
-
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ZilyClientSide"/>.
-        /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this zily side.
-        /// </param>
-        /// <param name="name">
-        /// The name of this zily instance.
-        /// </param>
-        /// <param name="identifiers">
-        /// The identifiers of this zily instance.
-        /// </param>
-        public ZilyClientSide(string protocol, string name, string[] identifiers) : base(protocol, name, identifiers)
-        {
-            
-        }
-
         /// <inheritdoc/>
         public override void ParseHeader(ZilyHeader header)
         {
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Disconnected:
-                    logger.Information("Zily server did shutdown");
+                    Parent.logger.Information("Zily server did shutdown");
                     break;
             }
 
@@ -67,11 +25,18 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Connect()
         {
-            logger.Information("Establishing a Zily connection");
+            Parent.logger.Information("Establishing a Zily connection");
+            Parent.Send(new ZilyHeader(ZilyHeaderFlag.SideIdentifier));
 
-            zs.WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
-            zs.IsOnline = true;
-            logger.Information("Connected to the Zily server");
+            if (Parent.IsClosed)
+            {
+                return;
+            }
+
+            Parent.WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
+            Parent.IsOnline = true;
+
+            Parent.logger.Information("Connected to {name}", Parent.OtherSide.Name);
         }
     }
 }

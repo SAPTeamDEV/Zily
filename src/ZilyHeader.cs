@@ -11,6 +11,11 @@ namespace SAPTeam.Zily
     public class ZilyHeader
     {
         /// <summary>
+        /// Gets an static Ok header object.
+        /// </summary>
+        public static ZilyHeader Ok { get; } = new ZilyHeader(ZilyHeaderFlag.Ok);
+
+        /// <summary>
         /// Gets or Sets the packet flag.
         /// </summary>
         public int Flag { get; set; }

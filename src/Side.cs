@@ -11,26 +11,20 @@ namespace SAPTeam.Zily
     public class Side : ISide
     {
         /// <inheritdoc/>
-        public string Protocol { get; }
+        public virtual string Protocol { get; }
 
         /// <inheritdoc/>
-        public Version Version { get; }
+        public virtual Version Version { get; }
 
         /// <inheritdoc/>
-        public string[] Identifiers { get; }
-
-        /// <inheritdoc/>
-        public string Name { get; }
+        public virtual string Name { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Side"/>.
         /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this side.
-        /// </param>
-        public Side(string protocol)
+        public Side()
         {
-            Protocol = protocol;
+            
         }
 
         /// <summary>
@@ -39,32 +33,38 @@ namespace SAPTeam.Zily
         /// <param name="protocol">
         /// The name of protocol implemented by this side.
         /// </param>
+        /// <param name="version">
+        /// The version of the side.
+        /// </param>
         /// <param name="name">
         /// The name of the side.
         /// </param>
-        public Side(string protocol, string name)
+        public Side(string protocol, Version version, string name)
         {
             Protocol = protocol;
+            Version = version;
             Name = name;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Side"/>.
+        /// Gets the string identifier of this Side.
         /// </summary>
-        /// <param name="protocol">
-        /// The name of protocol implemented by this side.
-        /// </param>
-        /// <param name="name">
-        /// The name of the side.
-        /// </param>
-        /// <param name="identifiers">
-        /// The identifiers of the side.
-        /// </param>
-        public Side(string protocol, string name, string[] identifiers)
+        /// <returns></returns>
+        public string GetIdentifier()
         {
-            Protocol = protocol;
-            Name = name;
-            Identifiers = identifiers;
+            return $"{Protocol};{Version.ToString()};{Name}";
+        }
+
+        /// <summary>
+        /// Parses an string identifier to an instance of <see cref="Side"/>.
+        /// </summary>
+        /// <param name="identifier"></param>
+        /// <returns></returns>
+        public static Side Parse(string identifier)
+        {
+            string[] data = identifier.Split(';');
+
+            return new Side(data[0], Version.Parse(data[1]), data[2]);
         }
     }
 }

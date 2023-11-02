@@ -40,8 +40,13 @@ namespace SAPTeam.Zily
         public const int Disconnected = 5;
 
         /// <summary>
-        /// Contains a packet with console message
+        /// Contains a packet with Side information.
         /// </summary>
-        public const int Write = 6;
+        public const int SideIdentifier = 6;
+
+        /// <summary>
+        /// Contains a packet with console message.
+        /// </summary>
+        public const int Write = 7;
     }
 }

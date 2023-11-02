@@ -18,10 +18,6 @@ namespace SAPTeam.Zily
         /// </summary>
         Version Version { get; }
 
-        /// <summary>
-        /// Gets the identifiers of the <see cref="ISide"/>.
-        /// </summary>
-        string[] Identifiers { get; }
 
         /// <summary>
         /// Gets the name of the <see cref="ISide"/>.
