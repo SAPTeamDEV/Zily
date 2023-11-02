@@ -38,7 +38,8 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override void Flush()
         {
-            stream.Send(HeaderFlag.Write, sb.ToString());
+            stream.Send(new ZilyHeader(ZilyHeaderFlag.Write, sb.ToString()));
+            sb.Clear();
         }
 
         /// <inheritdoc/>

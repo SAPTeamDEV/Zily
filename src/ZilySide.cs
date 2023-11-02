@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Serilog;
+
 namespace SAPTeam.Zily
 {
     /// <summary>
@@ -15,6 +17,9 @@ namespace SAPTeam.Zily
         public virtual int DisconnectFlag => ZilyHeaderFlag.Disconnected;
 
         internal ZilyStream zs;
+        internal ILogger logger;
+
+        ZilyHeader OkHeader = new ZilyHeader(ZilyHeaderFlag.Ok);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilySide"/>.
@@ -81,11 +86,20 @@ namespace SAPTeam.Zily
                 case ZilyHeaderFlag.Disconnected:
                     zs.IsOnline = false;
                     break;
+                case ZilyHeaderFlag.Write:
+                    Console.Write(header.Text);
+                    Ok();
+                    break;
                 default:
                     // Throw an exception because the response is unknown.
                     throw new ArgumentException("Invalid response.");
 
             }
+        }
+
+        protected void Ok()
+        {
+            zs.WriteCommand(OkHeader);
         }
     }
 }

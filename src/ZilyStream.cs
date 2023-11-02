@@ -59,6 +59,8 @@ namespace SAPTeam.Zily
 
             Stream = stream;
             Side = side;
+            Side.zs = this;
+            Side.logger = logger;
             streamEncoding = new UnicodeEncoding();
             this.logger = logger;
         }
@@ -284,7 +286,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteCommand(ZilyHeader header)
         {
-            if (!IsOnline)
+            if (!IsOnline && header.Flag != ZilyHeaderFlag.Connected)
             {
                 throw new ZilyException("Zily is not connected.");
             }
@@ -322,6 +324,17 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Listens to all incoming requests.
         /// </summary>
+        /// <param name="suppressLogger">
+        /// Determines whether the logger should be stopped during listening.
+        /// </param>
+        public void Listen(bool suppressLogger = true)
+        {
+            Listen(CancellationToken.None, suppressLogger);
+        }
+
+        /// <summary>
+        /// Listens to all incoming requests.
+        /// </summary>
         /// <param name="cancellationToken">
         /// A token for terminating the listener.
         /// </param>
@@ -338,7 +351,7 @@ namespace SAPTeam.Zily
                 logger = Serilog.Core.Logger.None;
             }
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested && IsOnline)
             {
                 try
                 {

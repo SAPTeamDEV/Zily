@@ -38,5 +38,10 @@ namespace SAPTeam.Zily
         /// Indicates an refused connection.
         /// </summary>
         public const int Disconnected = 5;
+
+        /// <summary>
+        /// Contains a packet with console message
+        /// </summary>
+        public const int Write = 6;
     }
 }
