@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 
+using Serilog;
 using Serilog.Core;
 
 namespace SAPTeam.Zily
@@ -11,22 +12,33 @@ namespace SAPTeam.Zily
     public class ZilyServerSide : ZilySide
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="ZilyServerSide"/>.
+        /// </summary>
+        /// <param name="stream">
+        /// An instance of <see cref="System.IO.Stream"/> with read and write permission.
+        /// </param>
+        /// <param name="logger">
+        /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
+        /// </param>
+        public ZilyServerSide(Stream stream, ILogger logger = null) : base(stream, logger) { }
+
+        /// <summary>
         /// Waits until a client connects to the server and then establishes the Zily connection.
         /// </summary>
         public void Accept()
         {
             bool everConnected = false;
 
-            Parent.logger.Debug("Waiting for client");
+            logger.Debug("Waiting for client");
             Wait();
 
             while (true)
             {
-                var header = ZilyHeader.Parse(Parent.Stream);
+                var header = ZilyHeader.Parse(Stream);
                 if (!everConnected)
                 {
-                    Parent.logger.Information("A new client connected to the pipe server");
-                    Parent.logger.Information("Establishing a Zily connection");
+                    logger.Information("A new client connected to the pipe server");
+                    logger.Information("Establishing a Zily connection");
                     everConnected = true;
                 }
 

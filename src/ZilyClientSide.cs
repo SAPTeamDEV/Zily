@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+
+using Serilog;
 
 namespace SAPTeam.Zily
 {
@@ -7,13 +10,24 @@ namespace SAPTeam.Zily
     /// </summary>
     public class ZilyClientSide : ZilySide
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ZilyClientSide"/>.
+        /// </summary>
+        /// <param name="stream">
+        /// An instance of <see cref="System.IO.Stream"/> with read and write permission.
+        /// </param>
+        /// <param name="logger">
+        /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
+        /// </param>
+        public ZilyClientSide(Stream stream, ILogger logger = null) : base(stream, logger) { }
+
         /// <inheritdoc/>
         public override void ParseHeader(ZilyHeader header)
         {
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Disconnected:
-                    Parent.logger.Information("Zily server did shutdown");
+                    logger.Information("Zily server did shutdown");
                     break;
             }
 
@@ -25,18 +39,18 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Connect()
         {
-            Parent.logger.Information("Establishing a Zily connection");
-            Parent.Send(new ZilyHeader(ZilyHeaderFlag.SideIdentifier));
+            logger.Information("Establishing a Zily connection");
+            Send(new ZilyHeader(ZilyHeaderFlag.SideIdentifier));
 
-            if (Parent.IsClosed)
+            if (IsClosed)
             {
                 return;
             }
 
-            Parent.WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
-            Parent.IsOnline = true;
+            WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
+            IsOnline = true;
 
-            Parent.logger.Information("Connected to {name}", Parent.OtherSide.Name);
+            logger.Information("Connected to {name}", OtherSide.Name);
         }
     }
 }

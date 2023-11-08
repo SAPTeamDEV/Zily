@@ -11,7 +11,7 @@ namespace SAPTeam.Zily
     public class ZilyTextWriter : TextWriter
     {
         StringBuilder sb;
-        ZilyStream stream;
+        ZilySide side;
 
         /// <inheritdoc/>
         public override Encoding Encoding => Encoding.Unicode;
@@ -22,9 +22,9 @@ namespace SAPTeam.Zily
         /// <param name="zilyStream">
         /// The underlying Zily stream.
         /// </param>
-        public ZilyTextWriter(ZilyStream zilyStream)
+        public ZilyTextWriter(ZilySide zilySide)
         {
-            stream = zilyStream;
+            side = zilySide;
             sb = new StringBuilder();
             NewLine = "\n";
         }
@@ -38,7 +38,7 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override void Flush()
         {
-            stream.Send(new ZilyHeader(ZilyHeaderFlag.Write, sb.ToString()));
+            side.Send(new ZilyHeader(ZilyHeaderFlag.Write, sb.ToString()));
             sb.Clear();
         }
 
@@ -48,7 +48,7 @@ namespace SAPTeam.Zily
             sb.Clear();
             sb = null;
 
-            stream = null;
+            side = null;
         }
     }
 }
