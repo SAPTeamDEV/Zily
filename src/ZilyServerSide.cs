@@ -22,8 +22,24 @@ namespace SAPTeam.Zily
         /// </param>
         public ZilyServerSide(Stream stream, ILogger logger = null) : base(stream, logger)
         {
-            aes = new AesEncryption();
-            okHeader = new ZilyHeader(aes, ZilyHeaderFlag.Ok);
+            isSecured = true;
+            okHeader = new ZilyHeader(Encryptor, ZilyHeaderFlag.Ok);
+        }
+
+        public override void ParseHeader(ZilyHeader header)
+        {
+            switch (header.Flag)
+            {
+                case ZilyHeaderFlag.AesKey:
+                    WriteCommand(new ZilyHeader(ZilyHeaderFlag.Ok, null, aesEnncryptor.Key));
+                    break;
+                case ZilyHeaderFlag.AesIV:
+                    WriteCommand(new ZilyHeader(ZilyHeaderFlag.Ok, null, aesEnncryptor.IV));
+                    break;
+                default:
+                    base.ParseHeader(header);
+                    break;
+            }
         }
 
         /// <summary>
@@ -38,7 +54,7 @@ namespace SAPTeam.Zily
 
             while (true)
             {
-                var header = ZilyHeader.Parse(Stream, aes);
+                var header = ZilyHeader.Parse(Encryptor, Stream);
                 if (!everConnected)
                 {
                     Logger.Information("A new client connected to the pipe server");

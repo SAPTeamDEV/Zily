@@ -39,12 +39,12 @@ namespace SAPTeam.Zily
             base.ParseHeader(header);
         }
 
-        public override void ParseResponse(int lastRequestFlag, string responseText)
+        public override void ParseResponse(ZilyHeader header)
         {
-            switch (lastRequestFlag)
+            switch (LastRequest)
             {
                 case ZilyHeaderFlag.SideIdentifier:
-                    var otherSide = Parse(responseText);
+                    var otherSide = Parse(header.Text);
                     if (Protocol != otherSide.Protocol || Version.Major != otherSide.Version.Major)
                     {
                         Logger.Fatal("Cannot connect to the server");
@@ -54,6 +54,15 @@ namespace SAPTeam.Zily
                     {
                         ServerSide = otherSide;
                     }
+                    break;
+                case ZilyHeaderFlag.AesKey:
+                    aesEnncryptor.Key = header.Buffer;
+                    break;
+                case ZilyHeaderFlag.AesIV:
+                    aesEnncryptor.IV = header.Buffer;
+                    break;
+                default:
+                    base.ParseResponse(header);
                     break;
             }
         }
@@ -65,16 +74,22 @@ namespace SAPTeam.Zily
         {
             Status = ZilySideStatus.Connecting;
             Logger.Information("Establishing a Zily connection");
-            aes = new AesEncryption();
-            okHeader = new ZilyHeader(aes, ZilyHeaderFlag.Ok);
-            Send(new ZilyHeader(aes, ZilyHeaderFlag.SideIdentifier));
+            Logger.Information("Requesting secret key");
+            Send(new ZilyHeader(Encryption.None, ZilyHeaderFlag.AesKey));
+            Logger.Information("Requesting IV");
+            Send(new ZilyHeader(Encryption.None, ZilyHeaderFlag.AesIV));
+            isSecured = true;
+            Logger.Information("Secure connection established");
+
+            okHeader = new ZilyHeader(Encryptor, ZilyHeaderFlag.Ok);
+            Send(new ZilyHeader(Encryptor, ZilyHeaderFlag.SideIdentifier));
 
             if (Status == ZilySideStatus.Offline)
             {
                 return;
             }
 
-            WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Connected));
+            WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Connected));
             Status = ZilySideStatus.Online;
 
             Logger.Information("Connected to {name}", ServerSide.Name);

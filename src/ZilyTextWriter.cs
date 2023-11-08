@@ -38,8 +38,7 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override void Flush()
         {
-            AesEncryption aes = new AesEncryption();
-            side.Send(new ZilyHeader(aes, ZilyHeaderFlag.Write, sb.ToString()));
+            side.Send(new ZilyHeader(side.Encryptor, ZilyHeaderFlag.Write, sb.ToString()));
             sb.Clear();
         }
 

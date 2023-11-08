@@ -44,9 +44,12 @@ namespace SAPTeam.Zily
         /// </summary>
         public const int SideIdentifier = 6;
 
+        public const int AesKey = 7;
+        public const int AesIV = 8;
+
         /// <summary>
         /// Contains a packet with console message.
         /// </summary>
-        public const int Write = 7;
+        public const int Write = 9;
     }
 }

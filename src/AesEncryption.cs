@@ -5,9 +5,21 @@ using System.Text;
 
 namespace SAPTeam.Zily
 {
-    public class AesEncryption
+    public class AesEncryption : IEncryption
     {
         Aes aes;
+
+        public byte[] Key
+        {
+            get => aes.Key;
+            set => aes.Key = value;
+        }
+
+        public byte[] IV
+        {
+            get => aes.IV;
+            set => aes.IV = value;
+        }
 
         public AesEncryption()
         {
@@ -15,10 +27,7 @@ namespace SAPTeam.Zily
 
             aes.KeySize = 256;
             aes.Mode = CipherMode.CBC;
-
-            aes.Padding = PaddingMode.Zeros;
-            aes.Key = Encoding.Unicode.GetBytes("testtest");
-            aes.IV = Encoding.Unicode.GetBytes("testtest");
+            aes.Padding = PaddingMode.PKCS7;
         }
 
         public byte[] Encrypt(string plainText)

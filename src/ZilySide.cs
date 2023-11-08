@@ -21,7 +21,23 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override string Name { get; } = "Zily";
 
-        protected AesEncryption aes;
+        protected AesEncryption aesEnncryptor = new AesEncryption();
+        internal protected IEncryption Encryptor
+        {
+            get
+            {
+                if (isSecured)
+                {
+                    return aesEnncryptor;
+                }
+                else
+                {
+                    return Encryption.None;
+                }
+            }
+        }
+
+        protected bool isSecured = false;
         protected ZilyHeader okHeader;
 
         /// <summary>
@@ -71,14 +87,14 @@ namespace SAPTeam.Zily
         /// </param>
         public virtual void ParseHeader(ZilyHeader header)
         {
-            Logger.Debug("Parsing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+            Logger.Debug("Parsing {size} byte data with flag {flag} and message \"{text}\"", header.Length, header.Flag, header.Text != null ? header.Text.Replace("\n", "") : "");
 
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Ok:
                     if (LastRequest > 1)
                     {
-                        ParseResponse(LastRequest, header.Text);
+                        ParseResponse(header);
                         LastRequest = 0;
                     }
                     break;
@@ -95,7 +111,7 @@ namespace SAPTeam.Zily
                     Status = ZilySideStatus.Offline;
                     break;
                 case ZilyHeaderFlag.SideIdentifier:
-                    WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Ok, GetIdentifier()));
+                    WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Ok, GetIdentifier()));
                     break;
                 case ZilyHeaderFlag.Write:
                     Console.Write(header.Text);
@@ -107,7 +123,7 @@ namespace SAPTeam.Zily
             }
         }
 
-        public virtual void ParseResponse(int lastRequestFlag, string responseText)
+        public virtual void ParseResponse(ZilyHeader header)
         {
 
         }
@@ -125,7 +141,7 @@ namespace SAPTeam.Zily
                 throw new ZilyException("Zily is not connected.");
             }
 
-            Logger.Debug("Writing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+            Logger.Debug("Writing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : "");
 
             byte[] buffer = header.ToByteArray();
             Stream.Write(buffer, 0, buffer.Length);
@@ -153,7 +169,7 @@ namespace SAPTeam.Zily
         public void Send(ZilyHeader header)
         {
             WriteCommand(header);
-            ZilyHeader header2 = ZilyHeader.Parse(Stream, aes);
+            ZilyHeader header2 = ZilyHeader.Parse(Encryptor, Stream);
             ParseHeader(header2);
         }
 
@@ -196,7 +212,7 @@ namespace SAPTeam.Zily
             {
                 try
                 {
-                    var header = ZilyHeader.Parse(Stream, aes);
+                    var header = ZilyHeader.Parse(Encryptor, Stream);
                     ParseHeader(header);
                 }
                 catch (IOException)
@@ -219,7 +235,7 @@ namespace SAPTeam.Zily
             if (Status == ZilySideStatus.Online)
             {
                 Logger.Information("Closing connection");
-                WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Disconnected));
+                WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Disconnected));
             }
 
             Status = ZilySideStatus.Offline;

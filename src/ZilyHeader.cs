@@ -18,7 +18,7 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Gets the packet text length.
         /// </summary>
-        public int Length => unicode_text.Length;
+        public int Length => Buffer.Length;
 
         /// <summary>
         /// Gets or Sets the packet text.
@@ -31,14 +31,15 @@ namespace SAPTeam.Zily
             }
             set
             {
-                unicode_text = value == null ? Array.Empty<byte>() : aes.Encrypt(value);
+                Buffer = value == null ? Array.Empty<byte>() : encryptor.Encrypt(value);
                 text = value;
             }
         }
 
-        byte[] unicode_text;
+        public byte[] Buffer { get; set; }
+
         string text;
-        AesEncryption aes;
+        IEncryption encryptor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyHeader"/>.
@@ -49,19 +50,20 @@ namespace SAPTeam.Zily
         /// <param name="text">
         /// The packet text.
         /// </param>
-        public ZilyHeader(AesEncryption aes, int flag, string text = null)
+        public ZilyHeader(IEncryption encryptor, int flag, string text = null)
         {
-            this.aes = aes;
+            this.encryptor = encryptor;
             Flag = flag;
             Text = text;
         }
 
-        private ZilyHeader(int flag, string text, byte[] unicode_text, AesEncryption aes)
+        public ZilyHeader(int flag, string text, byte[] buffer)
         {
-            this.aes = aes;
             Flag = flag;
             this.text = text;
-            this.unicode_text = unicode_text;
+            Buffer = buffer;
+
+            encryptor = Encryption.None;
         }
 
         /// <summary>
@@ -73,7 +75,7 @@ namespace SAPTeam.Zily
         /// <returns>
         /// A new instance of the <see cref="ZilyHeader"/>.
         /// </returns>
-        public static ZilyHeader Parse(Stream stream, AesEncryption aes)
+        public static ZilyHeader Parse(IEncryption encryptor, Stream stream)
         {
             int flag;
             string text = null;
@@ -94,10 +96,14 @@ namespace SAPTeam.Zily
             if (length > 0)
             {
                 stream.Read(buffer, 0, length);
-                text = aes.Decrypt(buffer);
+                
+                if (encryptor != Encryption.None)
+                {
+                    text = encryptor.Decrypt(buffer);
+                }
             }
 
-            return new ZilyHeader(flag, text, buffer, aes);
+            return new ZilyHeader(flag, text, buffer);
         }
 
         /// <summary>
@@ -119,7 +125,7 @@ namespace SAPTeam.Zily
                 (byte)Flag,
                 (byte)(Length / 256),
                 (byte)(Length & 255)
-            }.Concat(unicode_text)
+            }.Concat(Buffer)
             .ToArray();
         }
     }
