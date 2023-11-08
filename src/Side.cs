@@ -52,7 +52,7 @@ namespace SAPTeam.Zily
         /// <returns></returns>
         public string GetIdentifier()
         {
-            return $"{Protocol};{Version.ToString()};{Name}";
+            return $"{Protocol};{Version};{Name}";
         }
 
         /// <summary>

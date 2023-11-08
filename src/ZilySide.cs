@@ -24,7 +24,7 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Gets or Sets the last sent request.
         /// </summary>
-        protected int LastRequest { get; set; }
+        protected int LastRequest { get; private set; }
 
         /// <summary>
         /// Gets the underlying <see cref="System.IO.Stream"/>.
@@ -32,19 +32,11 @@ namespace SAPTeam.Zily
         protected Stream Stream { get; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this connection is online.
-        /// </summary>
-        public bool IsOnline { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this connection is closed.
-        /// </summary>
-        public bool IsClosed = false;
-
-        /// <summary>
         /// Gets or Sets the logger used by the stream.
         /// </summary>
         protected ILogger Logger;
+
+        public ZilySideStatus Status { get; protected set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilySide"/>.
@@ -94,10 +86,10 @@ namespace SAPTeam.Zily
                     Logger.Error(header.Text);
                     break;
                 case ZilyHeaderFlag.Connected:
-                    IsOnline = true;
+                    Status = ZilySideStatus.Online;
                     break;
                 case ZilyHeaderFlag.Disconnected:
-                    IsOnline = false;
+                    Status = ZilySideStatus.Offline;
                     break;
                 case ZilyHeaderFlag.SideIdentifier:
                     WriteCommand(new ZilyHeader(ZilyHeaderFlag.Ok, GetIdentifier()));
@@ -125,7 +117,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void WriteCommand(ZilyHeader header)
         {
-            if (!IsOnline && header.Flag == ZilyHeaderFlag.Write)
+            if (Status != ZilySideStatus.Online && header.Flag == ZilyHeaderFlag.Write)
             {
                 throw new ZilyException("Zily is not connected.");
             }
@@ -184,7 +176,7 @@ namespace SAPTeam.Zily
         /// </param>
         public void Listen(CancellationToken cancellationToken, bool suppressLogger = true)
         {
-            if (!IsOnline)
+            if (Status != ZilySideStatus.Online)
             {
                 return;
             }
@@ -197,7 +189,7 @@ namespace SAPTeam.Zily
                 Logger = Serilog.Core.Logger.None;
             }
 
-            while (!cancellationToken.IsCancellationRequested && IsOnline)
+            while (!cancellationToken.IsCancellationRequested && Status == ZilySideStatus.Online)
             {
                 try
                 {
@@ -221,13 +213,13 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public void Close()
         {
-            IsClosed = true;
-            if (IsOnline)
+            if (Status == ZilySideStatus.Online)
             {
                 Logger.Information("Closing connection");
                 WriteCommand(new ZilyHeader(ZilyHeaderFlag.Disconnected));
-                IsOnline = false;
             }
+
+            Status = ZilySideStatus.Offline;
         }
 
         /// <summary>
