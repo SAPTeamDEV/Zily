@@ -20,7 +20,11 @@ namespace SAPTeam.Zily
         /// <param name="logger">
         /// The application's logger. by default it uses the <see cref="Log.Logger"/>.
         /// </param>
-        public ZilyServerSide(Stream stream, ILogger logger = null) : base(stream, logger) { }
+        public ZilyServerSide(Stream stream, ILogger logger = null) : base(stream, logger)
+        {
+            aes = new AesEncryption();
+            okHeader = new ZilyHeader(aes, ZilyHeaderFlag.Ok);
+        }
 
         /// <summary>
         /// Waits until a client connects to the server and then establishes the Zily connection.
@@ -34,7 +38,7 @@ namespace SAPTeam.Zily
 
             while (true)
             {
-                var header = ZilyHeader.Parse(Stream);
+                var header = ZilyHeader.Parse(Stream, aes);
                 if (!everConnected)
                 {
                     Logger.Information("A new client connected to the pipe server");

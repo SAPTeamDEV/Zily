@@ -11,11 +11,6 @@ namespace SAPTeam.Zily
     public class ZilyHeader
     {
         /// <summary>
-        /// Gets an static Ok header object.
-        /// </summary>
-        public static ZilyHeader Ok { get; } = new ZilyHeader(ZilyHeaderFlag.Ok);
-
-        /// <summary>
         /// Gets or Sets the packet flag.
         /// </summary>
         public int Flag { get; set; }
@@ -36,13 +31,14 @@ namespace SAPTeam.Zily
             }
             set
             {
-                unicode_text = value == null ? Array.Empty<byte>() : Encoding.Unicode.GetBytes(value);
+                unicode_text = value == null ? Array.Empty<byte>() : aes.Encrypt(value);
                 text = value;
             }
         }
 
         byte[] unicode_text;
         string text;
+        AesEncryption aes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyHeader"/>.
@@ -53,14 +49,16 @@ namespace SAPTeam.Zily
         /// <param name="text">
         /// The packet text.
         /// </param>
-        public ZilyHeader(int flag, string text = null)
+        public ZilyHeader(AesEncryption aes, int flag, string text = null)
         {
+            this.aes = aes;
             Flag = flag;
             Text = text;
         }
 
-        private ZilyHeader(int flag, string text, byte[] unicode_text)
+        private ZilyHeader(int flag, string text, byte[] unicode_text, AesEncryption aes)
         {
+            this.aes = aes;
             Flag = flag;
             this.text = text;
             this.unicode_text = unicode_text;
@@ -75,7 +73,7 @@ namespace SAPTeam.Zily
         /// <returns>
         /// A new instance of the <see cref="ZilyHeader"/>.
         /// </returns>
-        public static ZilyHeader Parse(Stream stream)
+        public static ZilyHeader Parse(Stream stream, AesEncryption aes)
         {
             int flag;
             string text = null;
@@ -96,10 +94,10 @@ namespace SAPTeam.Zily
             if (length > 0)
             {
                 stream.Read(buffer, 0, length);
-                text = Encoding.Unicode.GetString(buffer);
+                text = aes.Decrypt(buffer);
             }
 
-            return new ZilyHeader(flag, text, buffer);
+            return new ZilyHeader(flag, text, buffer, aes);
         }
 
         /// <summary>

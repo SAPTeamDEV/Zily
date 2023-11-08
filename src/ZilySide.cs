@@ -21,6 +21,9 @@ namespace SAPTeam.Zily
         /// <inheritdoc/>
         public override string Name { get; } = "Zily";
 
+        protected AesEncryption aes;
+        protected ZilyHeader okHeader;
+
         /// <summary>
         /// Gets or Sets the last sent request.
         /// </summary>
@@ -92,7 +95,7 @@ namespace SAPTeam.Zily
                     Status = ZilySideStatus.Offline;
                     break;
                 case ZilyHeaderFlag.SideIdentifier:
-                    WriteCommand(new ZilyHeader(ZilyHeaderFlag.Ok, GetIdentifier()));
+                    WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Ok, GetIdentifier()));
                     break;
                 case ZilyHeaderFlag.Write:
                     Console.Write(header.Text);
@@ -150,7 +153,7 @@ namespace SAPTeam.Zily
         public void Send(ZilyHeader header)
         {
             WriteCommand(header);
-            ZilyHeader header2 = ZilyHeader.Parse(Stream);
+            ZilyHeader header2 = ZilyHeader.Parse(Stream, aes);
             ParseHeader(header2);
         }
 
@@ -193,7 +196,7 @@ namespace SAPTeam.Zily
             {
                 try
                 {
-                    var header = ZilyHeader.Parse(Stream);
+                    var header = ZilyHeader.Parse(Stream, aes);
                     ParseHeader(header);
                 }
                 catch (IOException)
@@ -216,7 +219,7 @@ namespace SAPTeam.Zily
             if (Status == ZilySideStatus.Online)
             {
                 Logger.Information("Closing connection");
-                WriteCommand(new ZilyHeader(ZilyHeaderFlag.Disconnected));
+                WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Disconnected));
             }
 
             Status = ZilySideStatus.Offline;
@@ -227,7 +230,7 @@ namespace SAPTeam.Zily
         /// </summary>
         protected void Ok()
         {
-            WriteCommand(ZilyHeader.Ok);
+            WriteCommand(okHeader);
         }
     }
 }

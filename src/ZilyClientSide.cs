@@ -65,14 +65,16 @@ namespace SAPTeam.Zily
         {
             Status = ZilySideStatus.Connecting;
             Logger.Information("Establishing a Zily connection");
-            Send(new ZilyHeader(ZilyHeaderFlag.SideIdentifier));
+            aes = new AesEncryption();
+            okHeader = new ZilyHeader(aes, ZilyHeaderFlag.Ok);
+            Send(new ZilyHeader(aes, ZilyHeaderFlag.SideIdentifier));
 
             if (Status == ZilySideStatus.Offline)
             {
                 return;
             }
 
-            WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
+            WriteCommand(new ZilyHeader(aes, ZilyHeaderFlag.Connected));
             Status = ZilySideStatus.Online;
 
             Logger.Information("Connected to {name}", ServerSide.Name);
