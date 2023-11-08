@@ -22,24 +22,14 @@ namespace SAPTeam.Zily
         public override string Name { get; } = "Zily";
 
         /// <summary>
-        /// Gets the proper flag for disconnect message.
-        /// </summary>
-        public virtual int DisconnectFlag => ZilyHeaderFlag.Disconnected;
-
-        /// <summary>
         /// Gets or Sets the last sent request.
         /// </summary>
-        public int LastRequest { get; set; }
+        protected int LastRequest { get; set; }
 
         /// <summary>
         /// Gets the underlying <see cref="System.IO.Stream"/>.
         /// </summary>
-        public Stream Stream { get; }
-
-        /// <summary>
-        /// Gets or Sets the other side client/server information.
-        /// </summary>
-        public ISide OtherSide { get; set; }
+        protected Stream Stream { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this connection is online.
@@ -54,7 +44,7 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Gets or Sets the logger used by the stream.
         /// </summary>
-        protected ILogger logger;
+        protected ILogger Logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilySide"/>.
@@ -75,7 +65,7 @@ namespace SAPTeam.Zily
             logger.Debug("Initializing a new Zily session");
 
             Stream = stream;
-            this.logger = logger;
+            Logger = logger;
         }
 
         /// <summary>
@@ -86,7 +76,7 @@ namespace SAPTeam.Zily
         /// </param>
         public virtual void ParseHeader(ZilyHeader header)
         {
-            logger.Debug("Parsing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+            Logger.Debug("Parsing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
 
             switch (header.Flag)
             {
@@ -98,10 +88,10 @@ namespace SAPTeam.Zily
                     }
                     break;
                 case ZilyHeaderFlag.Warn:
-                    logger.Warning(header.Text);
+                    Logger.Warning(header.Text);
                     break;
                 case ZilyHeaderFlag.Fail:
-                    logger.Error(header.Text);
+                    Logger.Error(header.Text);
                     break;
                 case ZilyHeaderFlag.Connected:
                     IsOnline = true;
@@ -117,28 +107,14 @@ namespace SAPTeam.Zily
                     Ok();
                     break;
                 default:
-                    logger.Error("Flag is invalid: {flag}", header.Flag);
+                    Logger.Error("Flag is invalid: {flag}", header.Flag);
                     break;
             }
         }
 
         public virtual void ParseResponse(int lastRequestFlag, string responseText)
         {
-            switch (lastRequestFlag)
-            {
-                case ZilyHeaderFlag.SideIdentifier:
-                    var otherSide = Parse(responseText);
-                    if (Protocol != otherSide.Protocol || Version.Major != otherSide.Version.Major)
-                    {
-                        logger.Fatal("Cannot connect to the server");
-                        Close();
-                    }
-                    else
-                    {
-                        OtherSide = otherSide;
-                    }
-                    break;
-            }
+
         }
 
         /// <summary>
@@ -154,7 +130,7 @@ namespace SAPTeam.Zily
                 throw new ZilyException("Zily is not connected.");
             }
 
-            logger.Debug("Writing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
+            Logger.Debug("Writing data with flag {flag} and message \"{text}\"", header.Flag, header.Text != null ? header.Text.Replace("\n", "") : null);
 
             byte[] buffer = header.ToByteArray();
             Stream.Write(buffer, 0, buffer.Length);
@@ -170,7 +146,7 @@ namespace SAPTeam.Zily
                 Stream.Flush();
             }
 
-            logger.Debug("Wrote {length} bytes", buffer.Length);
+            Logger.Debug("Wrote {length} bytes", buffer.Length);
         }
 
         /// <summary>
@@ -213,12 +189,12 @@ namespace SAPTeam.Zily
                 return;
             }
 
-            logger.Information("Starting listener");
+            Logger.Information("Starting listener");
             ILogger _logger = null;
             if (suppressLogger)
             {
-                _logger = logger;
-                logger = Serilog.Core.Logger.None;
+                _logger = Logger;
+                Logger = Serilog.Core.Logger.None;
             }
 
             while (!cancellationToken.IsCancellationRequested && IsOnline)
@@ -236,10 +212,10 @@ namespace SAPTeam.Zily
 
             if (suppressLogger)
             {
-                logger = _logger;
+                Logger = _logger;
             }
 
-            logger.Information("Listener has stopped");
+            Logger.Information("Listener has stopped");
         }
 
         /// <inheritdoc/>
@@ -248,8 +224,8 @@ namespace SAPTeam.Zily
             IsClosed = true;
             if (IsOnline)
             {
-                logger.Information("Closing connection");
-                WriteCommand(new ZilyHeader(DisconnectFlag));
+                Logger.Information("Closing connection");
+                WriteCommand(new ZilyHeader(ZilyHeaderFlag.Disconnected));
                 IsOnline = false;
             }
         }

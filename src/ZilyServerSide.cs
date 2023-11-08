@@ -29,7 +29,7 @@ namespace SAPTeam.Zily
         {
             bool everConnected = false;
 
-            logger.Debug("Waiting for client");
+            Logger.Debug("Waiting for client");
             Wait();
 
             while (true)
@@ -37,8 +37,8 @@ namespace SAPTeam.Zily
                 var header = ZilyHeader.Parse(Stream);
                 if (!everConnected)
                 {
-                    logger.Information("A new client connected to the pipe server");
-                    logger.Information("Establishing a Zily connection");
+                    Logger.Information("A new client connected to the pipe server");
+                    Logger.Information("Establishing a Zily connection");
                     everConnected = true;
                 }
 

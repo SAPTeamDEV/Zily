@@ -11,6 +11,11 @@ namespace SAPTeam.Zily
     public class ZilyClientSide : ZilySide
     {
         /// <summary>
+        /// Gets or Sets the other side client/server information.
+        /// </summary>
+        protected ISide ServerSide { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ZilyClientSide"/>.
         /// </summary>
         /// <param name="stream">
@@ -27,11 +32,30 @@ namespace SAPTeam.Zily
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Disconnected:
-                    logger.Information("Zily server did shutdown");
+                    Logger.Information("Zily server did shutdown");
                     break;
             }
 
             base.ParseHeader(header);
+        }
+
+        public override void ParseResponse(int lastRequestFlag, string responseText)
+        {
+            switch (lastRequestFlag)
+            {
+                case ZilyHeaderFlag.SideIdentifier:
+                    var otherSide = Parse(responseText);
+                    if (Protocol != otherSide.Protocol || Version.Major != otherSide.Version.Major)
+                    {
+                        Logger.Fatal("Cannot connect to the server");
+                        Close();
+                    }
+                    else
+                    {
+                        ServerSide = otherSide;
+                    }
+                    break;
+            }
         }
 
         /// <summary>
@@ -39,7 +63,7 @@ namespace SAPTeam.Zily
         /// </summary>
         public void Connect()
         {
-            logger.Information("Establishing a Zily connection");
+            Logger.Information("Establishing a Zily connection");
             Send(new ZilyHeader(ZilyHeaderFlag.SideIdentifier));
 
             if (IsClosed)
@@ -50,7 +74,7 @@ namespace SAPTeam.Zily
             WriteCommand(new ZilyHeader(ZilyHeaderFlag.Connected));
             IsOnline = true;
 
-            logger.Information("Connected to {name}", OtherSide.Name);
+            Logger.Information("Connected to {name}", ServerSide.Name);
         }
     }
 }

@@ -19,12 +19,12 @@ namespace SAPTeam.Zily
         /// <summary>
         /// Initializes a new instance of the <see cref="ZilyTextWriter"/>.
         /// </summary>
-        /// <param name="zilyStream">
+        /// <param name="side">
         /// The underlying Zily stream.
         /// </param>
-        public ZilyTextWriter(ZilySide zilySide)
+        public ZilyTextWriter(ZilySide side)
         {
-            side = zilySide;
+            this.side = side;
             sb = new StringBuilder();
             NewLine = "\n";
         }
