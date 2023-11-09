@@ -27,7 +27,7 @@ namespace SAPTeam.Zily
         public ZilyClientSide(Stream stream, ILogger logger = null) : base(stream, logger) { }
 
         /// <inheritdoc/>
-        public override void ParseHeader(ZilyHeader header)
+        protected override void ParseHeader(ZilyHeader header)
         {
             switch (header.Flag)
             {
@@ -39,7 +39,7 @@ namespace SAPTeam.Zily
             base.ParseHeader(header);
         }
 
-        public override void ParseResponse(ZilyHeader header)
+        protected override void ParseResponse(ZilyHeader header)
         {
             switch (LastRequest)
             {
@@ -81,15 +81,15 @@ namespace SAPTeam.Zily
             isSecured = true;
             Logger.Information("Secure connection established");
 
-            okHeader = new ZilyHeader(Encryptor, ZilyHeaderFlag.Ok);
-            Send(new ZilyHeader(Encryptor, ZilyHeaderFlag.SideIdentifier));
+            okHeader = CreateHeader(ZilyHeaderFlag.Ok);
+            Send(CreateHeader(ZilyHeaderFlag.SideIdentifier));
 
             if (Status == ZilySideStatus.Offline)
             {
                 return;
             }
 
-            WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Connected));
+            WriteCommand(CreateHeader(ZilyHeaderFlag.Connected));
             Status = ZilySideStatus.Online;
 
             Logger.Information("Connected to {name}", ServerSide.Name);

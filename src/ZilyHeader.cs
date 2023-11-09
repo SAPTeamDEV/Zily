@@ -57,11 +57,11 @@ namespace SAPTeam.Zily
             Text = text;
         }
 
-        public ZilyHeader(int flag, string text, byte[] buffer)
+        public ZilyHeader(int flag, byte[] buffer, string text = null)
         {
             Flag = flag;
-            this.text = text;
             Buffer = buffer;
+            this.text = text;
 
             encryptor = Encryption.None;
         }
@@ -75,7 +75,7 @@ namespace SAPTeam.Zily
         /// <returns>
         /// A new instance of the <see cref="ZilyHeader"/>.
         /// </returns>
-        public static ZilyHeader Parse(IEncryption encryptor, Stream stream)
+        public static ZilyHeader Read(IEncryption encryptor, Stream stream)
         {
             int flag;
             string text = null;
@@ -103,7 +103,7 @@ namespace SAPTeam.Zily
                 }
             }
 
-            return new ZilyHeader(flag, text, buffer);
+            return new ZilyHeader(flag, buffer, text);
         }
 
         /// <summary>

@@ -85,18 +85,27 @@ namespace SAPTeam.Zily
         /// <param name="header">
         /// The header object.
         /// </param>
-        public virtual void ParseHeader(ZilyHeader header)
+        public void Parse(ZilyHeader header)
         {
             Logger.Debug("Parsing {size} byte data with flag {flag} and message \"{text}\"", header.Length, header.Flag, header.Text != null ? header.Text.Replace("\n", "") : "");
 
+            if (header.Flag == ZilyHeaderFlag.Ok && LastRequest > 1)
+            {
+                ParseResponse(header);
+                LastRequest = 0;
+            }
+            else
+            {
+                ParseHeader(header);
+            }
+        }
+
+        protected virtual void ParseHeader(ZilyHeader header)
+        {
             switch (header.Flag)
             {
                 case ZilyHeaderFlag.Ok:
-                    if (LastRequest > 1)
-                    {
-                        ParseResponse(header);
-                        LastRequest = 0;
-                    }
+                    // Do nothing
                     break;
                 case ZilyHeaderFlag.Warn:
                     Logger.Warning(header.Text);
@@ -111,7 +120,7 @@ namespace SAPTeam.Zily
                     Status = ZilySideStatus.Offline;
                     break;
                 case ZilyHeaderFlag.SideIdentifier:
-                    WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Ok, GetIdentifier()));
+                    WriteCommand(CreateHeader(ZilyHeaderFlag.Ok, GetIdentifier()));
                     break;
                 case ZilyHeaderFlag.Write:
                     Console.Write(header.Text);
@@ -123,9 +132,14 @@ namespace SAPTeam.Zily
             }
         }
 
-        public virtual void ParseResponse(ZilyHeader header)
+        protected virtual void ParseResponse(ZilyHeader header)
         {
 
+        }
+
+        public ZilyHeader CreateHeader(int flag, string text = null)
+        {
+            return new ZilyHeader(Encryptor, flag, text);
         }
 
         /// <summary>
@@ -169,8 +183,8 @@ namespace SAPTeam.Zily
         public void Send(ZilyHeader header)
         {
             WriteCommand(header);
-            ZilyHeader header2 = ZilyHeader.Parse(Encryptor, Stream);
-            ParseHeader(header2);
+            ZilyHeader header2 = ZilyHeader.Read(Encryptor, Stream);
+            Parse(header2);
         }
 
         /// <summary>
@@ -212,8 +226,8 @@ namespace SAPTeam.Zily
             {
                 try
                 {
-                    var header = ZilyHeader.Parse(Encryptor, Stream);
-                    ParseHeader(header);
+                    var header = ZilyHeader.Read(Encryptor, Stream);
+                    Parse(header);
                 }
                 catch (IOException)
                 {
@@ -235,7 +249,7 @@ namespace SAPTeam.Zily
             if (Status == ZilySideStatus.Online)
             {
                 Logger.Information("Closing connection");
-                WriteCommand(new ZilyHeader(Encryptor, ZilyHeaderFlag.Disconnected));
+                WriteCommand(CreateHeader(ZilyHeaderFlag.Disconnected));
             }
 
             Status = ZilySideStatus.Offline;
