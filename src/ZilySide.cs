@@ -126,6 +126,10 @@ namespace SAPTeam.Zily
                     Console.Write(header.Text);
                     Ok();
                     break;
+                case ZilyHeaderFlag.ReadLine:
+                    var text = Console.ReadLine();
+                    WriteCommand(CreateHeader(ZilyHeaderFlag.Ok, text));
+                    break;
                 default:
                     Logger.Error("Flag is invalid: {flag}", header.Flag);
                     break;

@@ -51,5 +51,7 @@ namespace SAPTeam.Zily
         /// Contains a packet with console message.
         /// </summary>
         public const int Write = 9;
+
+        public const int ReadLine = 10;
     }
 }
